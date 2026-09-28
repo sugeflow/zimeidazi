@@ -1,0 +1,6 @@
+App icon for a Chinese desktop software called "自媒搭子" ("your social-media creation buddy"), aimed at non-technical beginners.
+Concept: two cute minimal rounded blob characters standing shoulder to shoulder — one larger holding a small pencil, one smaller with a tiny play-button symbol on its body — conveying partnership ("搭子" = buddy) and content creation (writing + video). Friendly, simple dot eyes, no mouth or a tiny smile.
+Style: modern flat vector app icon, bold clean shapes, very few elements, readable at small sizes. Warm coral-orange (#E8573A) squircle base with a soft gradient, characters in white and cream with one small warm-yellow accent.
+Composition: a single rounded-square (macOS-style squircle) centered, occupying about 80% of the canvas, characters centered with generous padding.
+Background outside the squircle: fully transparent.
+No text, no letters, no watermark, no 3D render, no photorealism, no busy details.
