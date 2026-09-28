@@ -115,6 +115,25 @@ v0.1 设想的是"在用户电脑上 pip/npm 安装依赖"。国内环境下这�
 - 首次启动全程只访问我们自己的 OSS，不依赖 GitHub、PyPI、npm、HuggingFace
 - GitHub Releases 同时保留一份，作为备份和开源发布渠道
 
+### M1 实测结果（2026-09-28）
+
+| 包 | mac-arm64 解压 / 压缩 | win-x64 解压 / 压缩 |
+|---|---|---|
+| 运行时包（Python + 依赖、Node + OpenClaw、FFmpeg） | 2.0GB / **542MB** | 2.2GB / **614MB** |
+| 浏览器包（Chromium + headless shell） | 583MB / **236MB** | 740MB / **284MB** |
+
+- 冒烟测试在两个平台的 CI 上全部通过：依赖、FFmpeg、Node、OpenClaw、Chromium、gateway，以及后端加载 114 个技能。Windows 从零开始跑完约 87 秒
+- 比预估大，Windows 首次下载合计约 **900MB**。M5 之前可以做的优化：
+  - 剪掉 OpenClaw node_modules 里的 `.d.ts`、sourcemap 和用不到的 provider SDK
+  - `opencv-python` 和 `opencv-python-headless` 重复安装了，去掉一个
+  - 确认 headless shell 是否会用到，用不到就去掉
+- 冷启动约 195 秒：macOS 首次运行新解压的程序文件时要做安全扫描，Python 也要首次编译字节码。第二次启动只要 **14 秒**，其中 gateway 本身约 5 秒。M2 的首次准备页要把这段时间算进去，并且在解压后先预热一次
+- M2 要处理的 OpenClaw 默认行为：
+  - 会用 **bonjour 在局域网广播自己**：出于隐私考虑必须关掉
+  - 默认模型是 `openai/…`：改成我们的配置
+  - 收到 SIGTERM 后最多等 315 秒才退出：壳在短暂等待后强制结束进程
+  - 日志写在 `/tmp/openclaw/`：改到我们自己的 logs 目录
+
 ## 5. 目录布局
 
 **安装目录（只读，每个版本整体替换）**：Tauri 壳 + `resources/easel/`（打过补丁的源码快照）
