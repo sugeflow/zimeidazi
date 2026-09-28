@@ -5,3 +5,4 @@ desktop/src-tauri/gen/
 .env
 *.log
 dist/
+build/

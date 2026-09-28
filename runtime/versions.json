@@ -1,0 +1,33 @@
+{
+  "runtime_version": "1",
+  "python": {
+    "version": "3.12.14",
+    "pbs_release": "20260924",
+    "url": "https://github.com/astral-sh/python-build-standalone/releases/download/{pbs_release}/cpython-{version}+{pbs_release}-{triple}-install_only.tar.gz"
+  },
+  "node": {
+    "version": "24.21.0",
+    "url": {
+      "win-x64": "https://nodejs.org/dist/v{version}/node-v{version}-win-x64.zip",
+      "mac-arm64": "https://nodejs.org/dist/v{version}/node-v{version}-darwin-arm64.tar.gz"
+    }
+  },
+  "openclaw": { "version": "2026.9.6" },
+  "ffmpeg": {
+    "win-x64": {
+      "license": "LGPL",
+      "urls": ["https://github.com/BtbN/FFmpeg-Builds/releases/download/autobuild-2026-09-27-13-04/ffmpeg-n9.0.2-12-gc867e13549-win64-lgpl-9.0.zip"]
+    },
+    "mac-arm64": {
+      "license": "GPL（仅测试阶段；正式发布前换 LGPL 自编译版本）",
+      "urls": [
+        "https://ffmpeg.martin-riedl.de/download/macos/arm64/1789931890_9.0.2/ffmpeg.zip",
+        "https://ffmpeg.martin-riedl.de/download/macos/arm64/1789931890_9.0.2/ffprobe.zip"
+      ]
+    }
+  },
+  "platforms": {
+    "win-x64": { "triple": "x86_64-pc-windows-msvc" },
+    "mac-arm64": { "triple": "aarch64-apple-darwin" }
+  }
+}
