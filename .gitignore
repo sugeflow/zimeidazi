@@ -4,3 +4,4 @@ desktop/src-tauri/gen/
 .DS_Store
 .env
 *.log
+dist/
