@@ -1,0 +1,3 @@
+[submodule "upstream/Easel"]
+	path = upstream/Easel
+	url = https://github.com/ZJU-REAL/Easel.git
