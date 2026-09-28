@@ -2,5 +2,10 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 fn main() {
-    zimeidazi_lib::run()
+    let args: Vec<String> = std::env::args().collect();
+    if args.get(1).map(String::as_str) == Some("--selftest") {
+        let resources = args.get(2).map(Into::into).expect("用法：zimeidazi --selftest <资源目录>");
+        std::process::exit(zimeidazi_lib::selftest(resources));
+    }
+    zimeidazi_lib::run_app()
 }

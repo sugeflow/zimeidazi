@@ -25,16 +25,23 @@ jobs:
             os: windows-latest
             target: x86_64-pc-windows-msvc
             bundles: nsis
+            exe: zimeidazi.exe
           - name: mac-arm64
             os: macos-14
             target: aarch64-apple-darwin
             bundles: dmg
+            exe: zimeidazi
     runs-on: ${{ matrix.os }}
-    defaults:
-      run:
-        working-directory: desktop
+    env:
+      PYTHONUTF8: '1'
     steps:
       - uses: actions/checkout@v7
+        with:
+          submodules: true
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
 
       - uses: actions/setup-node@v7
         with:
@@ -50,10 +57,33 @@ jobs:
         with:
           workspaces: desktop/src-tauri -> target
 
-      - run: npm ci
+      - name: 整理 Easel 代码
+        run: python scripts/stage_easel.py
 
       - name: 构建
-        run: npx tauri build --target ${{ matrix.target }} --bundles ${{ matrix.bundles }} --ci
+        working-directory: desktop
+        run: |
+          npm ci
+          npx tauri build --target ${{ matrix.target }} --bundles ${{ matrix.bundles }} --ci
+
+      # 无窗口跑一遍：从 runtime-r1 下载运行时 → 配置 → 启动服务 → 检查 → 关闭并确认进程清理干净
+      - name: 自检
+        shell: pwsh
+        env:
+          ZMDZ_DATA_DIR: ${{ runner.temp }}/zmdz-data
+        run: |
+          $dir = "desktop/src-tauri/target/${{ matrix.target }}/release"
+          $exe = Join-Path $dir "${{ matrix.exe }}"
+          # Windows 发布版是 GUI 程序，必须用 -Wait 才能拿到退出码
+          $p = Start-Process -FilePath $exe -ArgumentList '--selftest', (Resolve-Path $dir) -Wait -PassThru -NoNewWindow
+          Get-Content "$env:ZMDZ_DATA_DIR/logs/selftest.log" -ErrorAction SilentlyContinue
+          if ($p.ExitCode -ne 0) {
+            foreach ($f in 'setup.log', 'gateway.log', 'web.log') {
+              Write-Host "----- $f -----"
+              Get-Content "$env:ZMDZ_DATA_DIR/logs/$f" -Tail 40 -ErrorAction SilentlyContinue
+            }
+            exit $p.ExitCode
+          }
 
       - name: 上传安装包
         uses: actions/upload-artifact@v7

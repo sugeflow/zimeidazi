@@ -20,7 +20,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: runtime-${{ github.ref }}
@@ -85,3 +85,14 @@ jobs:
             build/runtime/manifest-*.json
           retention-days: 14
           compression-level: 0
+
+      # 过渡方案：放到 GitHub Release 供桌面壳下载（M5 改为国内 OSS）
+      - name: 发布到 runtime-r1
+        if: github.ref == 'refs/heads/main'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create runtime-r1 --prerelease --title "运行时包 r1" \
+            --notes "桌面壳首次启动时下载的运行时包和浏览器包。由 runtime.yml 自动更新。" 2>/dev/null || true
+          gh release upload runtime-r1 build/runtime/*.tar.zst build/runtime/manifest-*.json --clobber

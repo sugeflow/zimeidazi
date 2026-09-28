@@ -26,7 +26,10 @@
   },
   "bundle": {
     "active": true,
-    "targets": ["nsis", "dmg"],
+    "targets": [
+      "nsis",
+      "dmg"
+    ],
     "category": "Productivity",
     "shortDescription": "面向小白的自媒体创作工作台",
     "copyright": "基于开源项目 Easel（Apache-2.0）",
@@ -38,15 +41,23 @@
       "icons/icon.ico"
     ],
     "windows": {
-      "webviewInstallMode": { "type": "embedBootstrapper" },
+      "webviewInstallMode": {
+        "type": "embedBootstrapper"
+      },
       "nsis": {
         "installMode": "currentUser",
-        "languages": ["SimpChinese"],
+        "languages": [
+          "SimpChinese"
+        ],
         "displayLanguageSelector": false
       }
     },
     "macOS": {
       "minimumSystemVersion": "11.0"
+    },
+    "resources": {
+      "../../build/easel/": "easel/",
+      "../../bootstrap/": "bootstrap/"
     }
   }
 }

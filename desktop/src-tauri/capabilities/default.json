@@ -1,7 +1,7 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
-  "description": "本地 UI 页面的权限",
+  "description": "本地准备页的权限（工作台页面是远程地址，不授予任何权限）",
   "windows": ["main"],
   "permissions": ["core:default"]
 }

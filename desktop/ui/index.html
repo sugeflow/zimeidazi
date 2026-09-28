@@ -6,43 +6,115 @@
   <title>自媒搭子</title>
   <style>
     :root {
-      --bg: #faf7f2; --fg: #1f1d1a; --muted: #7a746b; --accent: #e8573a; --card: #ffffff; --line: #ece6dc;
+      --bg: #faf7f2; --fg: #1f1d1a; --muted: #7a746b; --accent: #ef5a3a; --track: #efe8de;
+      --card: #ffffff; --line: #ece6dc; --err: #c2412d; --err-bg: #fdf0ec;
     }
     @media (prefers-color-scheme: dark) {
-      :root { --bg: #171614; --fg: #f1ede6; --muted: #a39c91; --accent: #ff7a5c; --card: #211f1c; --line: #2f2c28; }
+      :root {
+        --bg: #171614; --fg: #f1ede6; --muted: #a39c91; --accent: #ff7a5c; --track: #2c2925;
+        --card: #211f1c; --line: #2f2c28; --err: #ff8a70; --err-bg: #2b1d19;
+      }
     }
     * { box-sizing: border-box; }
     html, body { height: 100%; margin: 0; }
     body {
       background: var(--bg); color: var(--fg);
       font-family: -apple-system, "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif;
-      display: grid; place-items: center;
+      display: grid; place-items: center; -webkit-user-select: none; user-select: none;
     }
-    main { text-align: center; padding: 24px; }
-    .logo { width: 112px; height: 112px; margin: 0 auto 16px; display: block; }
-    h1 { margin: 0 0 8px; font-size: 28px; letter-spacing: 2px; }
-    p { margin: 0; color: var(--muted); }
-    .card {
-      margin-top: 28px; padding: 14px 18px; border: 1px solid var(--line); border-radius: 12px;
-      background: var(--card); color: var(--muted); font-size: 13px; display: inline-block;
+    main { width: min(440px, 100% - 48px); text-align: center; }
+    .logo { width: 104px; height: 104px; display: block; margin: 0 auto 14px; }
+    h1 { margin: 0 0 6px; font-size: 26px; letter-spacing: 2px; }
+    .sub { margin: 0 0 32px; color: var(--muted); font-size: 14px; }
+    .label { font-size: 15px; margin-bottom: 12px; min-height: 1.4em; }
+    .bar { height: 8px; border-radius: 99px; background: var(--track); overflow: hidden; }
+    .fill { height: 100%; width: 0; border-radius: inherit; background: var(--accent); transition: width .25s ease; }
+    .bar.indeterminate .fill { width: 35%; animation: slide 1.2s ease-in-out infinite; }
+    @keyframes slide { from { transform: translateX(-100%); } to { transform: translateX(290%); } }
+    .detail { margin-top: 10px; color: var(--muted); font-size: 12px; min-height: 1.4em; font-variant-numeric: tabular-nums; }
+    .hint { margin-top: 28px; color: var(--muted); font-size: 12px; line-height: 1.7; }
+    .error {
+      display: none; text-align: left; margin-top: 8px; padding: 14px 16px; border-radius: 12px;
+      background: var(--err-bg); color: var(--err); font-size: 13px; line-height: 1.6;
     }
+    .error pre {
+      margin: 10px 0 0; max-height: 160px; overflow: auto; white-space: pre-wrap; word-break: break-all;
+      font: 11px/1.5 ui-monospace, Menlo, Consolas, monospace; color: var(--muted); user-select: text;
+    }
+    .actions { display: none; gap: 10px; justify-content: center; margin-top: 18px; }
+    button {
+      font: inherit; font-size: 14px; padding: 9px 20px; border-radius: 10px; cursor: pointer;
+      border: 1px solid var(--line); background: var(--card); color: var(--fg);
+    }
+    button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .foot { position: fixed; bottom: 14px; left: 0; right: 0; text-align: center; color: var(--muted); font-size: 11px; opacity: .8; }
+    body.failed .progress, body.failed .hint { display: none; }
+    body.failed .error { display: block; }
+    body.failed .actions { display: flex; }
   </style>
 </head>
 <body>
   <main>
     <img class="logo" src="logo.png" alt="">
     <h1>自媒搭子</h1>
-    <p>你的自媒体创作搭子 · 准备中</p>
-    <div class="card" id="info">正在读取版本信息…</div>
+    <p class="sub">你的自媒体创作搭子</p>
+
+    <section class="progress">
+      <div class="label" id="label">正在启动…</div>
+      <div class="bar indeterminate" id="bar"><div class="fill" id="fill"></div></div>
+      <div class="detail" id="detail"></div>
+    </section>
+    <p class="hint" id="hint">首次打开需要下载并安装创作环境，大约需要几分钟<br>中途关闭也没关系，下次打开会接着进行</p>
+
+    <div class="error" id="error">
+      <strong id="errTitle">启动失败</strong>
+      <pre id="errMsg"></pre>
+    </div>
+    <div class="actions">
+      <button class="primary" id="retry">重试</button>
+      <button id="logs">打开日志</button>
+    </div>
   </main>
+  <div class="foot" id="foot"></div>
+
   <script>
-    const info = document.getElementById('info');
-    const invoke = window.__TAURI__?.core?.invoke;
-    if (invoke) {
-      invoke('app_info').then(i => { info.textContent = `v${i.version} · ${i.os}-${i.arch}`; })
-        .catch(e => { info.textContent = '读取失败：' + e; });
+    const $ = id => document.getElementById(id);
+    const T = window.__TAURI__;
+
+    function setProgress(p) {
+      document.body.classList.remove('failed');
+      $('label').textContent = p.label;
+      $('detail').textContent = p.detail || '';
+      const known = typeof p.percent === 'number';
+      $('bar').classList.toggle('indeterminate', !known);
+      $('fill').style.width = known ? Math.min(100, p.percent).toFixed(1) + '%' : '';
+    }
+
+    function fail(message) {
+      document.body.classList.add('failed');
+      const [first, ...rest] = String(message).split('\n');
+      $('errTitle').textContent = first;
+      $('errMsg').textContent = rest.join('\n').trim();
+      $('errMsg').style.display = rest.join('').trim() ? 'block' : 'none';
+    }
+
+    function start() {
+      setProgress({ label: '正在启动…' });
+      T.core.invoke('start');
+    }
+
+    if (!T) {
+      $('label').textContent = '请在自媒搭子桌面应用中打开此页面';
     } else {
-      info.textContent = '在浏览器中预览（非桌面环境）';
+      T.event.listen('dazi://progress', e => setProgress(e.payload));
+      T.event.listen('dazi://error', e => fail(e.payload));
+      $('retry').onclick = start;
+      $('logs').onclick = () => T.core.invoke('open_logs');
+      T.core.invoke('app_info').then(i => { $('foot').textContent = `v${i.version} · 基于开源项目 Easel`; });
+
+      const crashed = new URLSearchParams(location.search).get('crashed');
+      if (crashed) $('hint').textContent = '服务意外退出，正在重新启动…';
+      start();
     }
   </script>
 </body>
