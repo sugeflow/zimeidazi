@@ -14,6 +14,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import shutil
@@ -86,7 +87,20 @@ def link_dir(link: Path, target: Path) -> None:
         link.symlink_to(target, target_is_directory=True)
 
 
-def resolve_workspace(app: Path) -> Path:
+MARKER = Path.home() / f".openclaw-{PROFILE}" / ".dazi-configured.json"
+
+
+def load_marker() -> dict:
+    try:
+        return json.loads(MARKER.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+
+
+def resolve_workspace(app: Path, cached: str | None) -> Path:
+    # 查询 workspace 要启动一次 OpenClaw 命令行（十几秒），查过一次就记下来
+    if cached and Path(cached).is_dir():
+        return Path(cached)
     r = subprocess.run([sys.executable, str(app / "easel" / "openclaw_workspace.py")], cwd=app,
                        capture_output=True, text=True, encoding="utf-8", errors="replace")
     lines = [x for x in r.stdout.splitlines() if x.strip()]
@@ -95,16 +109,39 @@ def resolve_workspace(app: Path) -> Path:
     return Path.home() / f".openclaw-{PROFILE}" / "workspace"
 
 
+def mirror(src: Path, dst: Path) -> int:
+    """把 src 同步到 dst：只复制有变化的文件（比较大小和修改时间），返回复制的文件数。
+    不删除 dst 里多出来的文件：有的技能运行时会在自己目录里装依赖（如 postinstall），不能删。"""
+    copied = 0
+    dst.mkdir(parents=True, exist_ok=True)
+    for f in src.rglob("*"):
+        t = dst / f.relative_to(src)
+        if f.is_dir():
+            t.mkdir(parents=True, exist_ok=True)
+            continue
+        st = f.stat()
+        if t.exists():
+            tt = t.stat()
+            if tt.st_size == st.st_size and int(tt.st_mtime) == int(st.st_mtime):
+                continue
+        t.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(f, t)  # 连同修改时间一起复制，下次才能据此跳过
+        copied += 1
+    return copied
+
+
 def sync_workspace(app: Path, ws: Path) -> None:
     skills = ws / "skills"
     skills.mkdir(parents=True, exist_ok=True)
     src = app / "skills" / "openclaw"
+    copied = 0
     for d in src.iterdir():
-        dest = skills / d.name
+        # 只同步我们随软件分发的技能目录；workspace 里的其他目录不动
         if d.is_dir():
-            shutil.copytree(d, dest, dirs_exist_ok=True)
+            copied += mirror(d, skills / d.name)
         else:
-            shutil.copy2(d, dest)
+            shutil.copy2(d, skills / d.name)
+            copied += 1
     for md in (app / "openclaw" / "workspace").glob("*.md"):
         shutil.copy2(md, ws / md.name)
     (ws / "CONTEXT.md").write_text(
@@ -113,10 +150,9 @@ def sync_workspace(app: Path, ws: Path) -> None:
         f"产物输出到：{app / 'outputs'}\n"
         f"用户素材在：{app / 'assets'}\n"
         f"用户画像在：{app / 'profiles'}\n", encoding="utf-8")
-    shared = ws / "shared"
-    shutil.rmtree(shared, ignore_errors=True)
     if (app / "skills" / "shared").is_dir():
-        shutil.copytree(app / "skills" / "shared", shared)
+        copied += mirror(app / "skills" / "shared", ws / "shared")
+    print(f"技能同步：更新了 {copied} 个文件", file=sys.stderr, flush=True)
     link_dir(ws / "easel-profiles", app / "profiles")
     link_dir(ws / "outputs", app / "outputs")
 
@@ -131,13 +167,19 @@ def main() -> None:
     app = args.app.resolve()
     oc = OpenClaw(args.node, args.openclaw, app)
 
-    step("onboard", "初始化 Agent 配置")
-    oc.run("onboard", "--non-interactive", "--mode", "local", "--accept-risk",
-           "--skip-health", "--skip-channels", "--skip-skills", "--skip-ui", "--skip-hooks",
-           "--skip-search", "--skip-daemon")
+    # 初始化只需要做一次；已经有配置文件就跳过（这一步要十几秒）
+    config_file = Path.home() / f".openclaw-{PROFILE}" / "openclaw.json"
+    fresh = not config_file.exists()
+    if fresh:
+        step("onboard", "初始化 Agent 配置")
+        oc.run("onboard", "--non-interactive", "--mode", "local", "--accept-risk",
+               "--skip-health", "--skip-channels", "--skip-skills", "--skip-ui", "--skip-hooks",
+               "--skip-search", "--skip-daemon")
 
+    # 刚重新初始化过（配置文件是新的），之前记下的"已写入"不再成立
+    marker = load_marker() if not fresh else {}
     step("skills", "同步创作技能")
-    ws = resolve_workspace(app)
+    ws = resolve_workspace(app, marker.get("workspace"))
     sync_workspace(app, ws)
 
     step("config", "写入 Agent 配置")
@@ -169,8 +211,12 @@ def main() -> None:
         model_msg = f"模型：{model}"
     else:
         model_msg = "尚未配置模型（激活后自动配置）"
-    oc.batch(ops)
-    oc.run("config", "validate")
+    # 写配置 + 校验要启动两次 OpenClaw 命令行；配置内容没变就跳过
+    ops_hash = hashlib.sha256(json.dumps(ops, sort_keys=True, ensure_ascii=False).encode()).hexdigest()
+    if marker.get("ops") != ops_hash:
+        oc.batch(ops)
+        oc.run("config", "validate")
+    MARKER.write_text(json.dumps({"workspace": str(ws), "ops": ops_hash}), encoding="utf-8")
     step("done", f"Agent 配置完成 · {model_msg}")
 
 

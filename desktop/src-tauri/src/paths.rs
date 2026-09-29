@@ -115,7 +115,16 @@ pub struct State {
     pub pids: Vec<u32>,
 }
 
-/// 递归复制目录，跳过 `skip` 里的相对路径（只在目标已存在时跳过）。
+/// 目标文件存在且内容相同就不用再复制（升级时大部分文件没变）
+fn same_content(a: &Path, b: &Path) -> bool {
+    match (std::fs::metadata(a), std::fs::metadata(b)) {
+        (Ok(ma), Ok(mb)) if ma.len() == mb.len() => std::fs::read(a).ok() == std::fs::read(b).ok(),
+        _ => false,
+    }
+}
+
+/// 递归复制目录，跳过 `skip` 里的相对路径（只在目标已存在时跳过）；内容相同的文件不重复复制。
+/// 返回实际复制的文件数。
 pub fn copy_tree(src: &Path, dst: &Path, skip: &[&str]) -> Result<u64> {
     fn walk(src: &Path, dst: &Path, rel: &Path, skip: &[&str], n: &mut u64) -> Result<()> {
         std::fs::create_dir_all(dst.join(rel))?;
@@ -129,7 +138,7 @@ pub fn copy_tree(src: &Path, dst: &Path, skip: &[&str]) -> Result<u64> {
             }
             if entry.file_type()?.is_dir() {
                 walk(src, dst, &r, skip, n)?;
-            } else {
+            } else if !same_content(&entry.path(), &target) {
                 std::fs::copy(entry.path(), &target)
                     .with_context(|| format!("复制 {} 失败", r.display()))?;
                 *n += 1;

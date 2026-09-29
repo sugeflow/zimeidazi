@@ -51,7 +51,6 @@ pub async fn prepare(paths: &Paths, resources: &Path, emit: Emit<'_>) -> Result<
         if state.runtime.as_deref() != Some(&m.files.runtime.sha256) || needs_runtime {
             install_pack(paths, &m.files.runtime, "runtime", &paths.runtime, "runtime", "创作环境", emit).await?;
             state.runtime = Some(m.files.runtime.sha256.clone());
-            state.configured = None;
             paths.save_state(&state)?;
         }
         if state.browsers.as_deref() != Some(&m.files.browsers.sha256) || needs_browsers {
@@ -71,7 +70,6 @@ pub async fn prepare(paths: &Paths, resources: &Path, emit: Emit<'_>) -> Result<
         let (src, dst) = (bundled.clone(), paths.app.clone());
         tokio::task::spawn_blocking(move || copy_tree(&src, &dst, &[".env"])).await??;
         state.app_synced = Some(app_id.clone());
-        state.configured = None;
         paths.save_state(&state)?;
     }
     let env_file = paths.app.join(".env");
@@ -79,10 +77,13 @@ pub async fn prepare(paths: &Paths, resources: &Path, emit: Emit<'_>) -> Result<
         std::fs::write(&env_file, ENV_TEMPLATE)?;
     }
 
-    // 3. OpenClaw 配置：代码、运行时、.env 任一变化都重新配置
+    // 3. OpenClaw 配置：只在 Agent 相关内容（技能、人设文件、配置脚本）、运行时或 .env 变化时重做。
+    //    只改界面的升级不会触发，省掉每次升级约 1 分钟的等待
+    let agent_id = std::fs::read_to_string(bundled.join(".agent-id")).unwrap_or_else(|_| app_id.clone());
     let fingerprint = {
         let mut h = Sha256::new();
-        h.update(app_id.as_bytes());
+        h.update(agent_id.trim().as_bytes());
+        h.update(std::fs::read(resources.join("bootstrap").join("configure.py")).unwrap_or_default());
         h.update(state.runtime.clone().unwrap_or_default().as_bytes());
         h.update(std::fs::read(&env_file).unwrap_or_default());
         h.finalize().iter().map(|b| format!("{b:02x}")).collect::<String>()

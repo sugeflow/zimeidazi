@@ -52,7 +52,7 @@ impl Services {
         self.children.lock().unwrap().values().map(|c| c.id()).collect()
     }
 
-    /// 启动 gateway 和后端，等两者都就绪。
+    /// 同时启动 gateway 和后端，等两者都就绪。
     pub async fn start(&self, paths: &Paths) -> Result<()> {
         self.stopping.store(false, std::sync::atomic::Ordering::SeqCst);
         std::fs::create_dir_all(&paths.logs)?;
@@ -71,10 +71,7 @@ impl Services {
             &env,
             &paths.logs.join("gateway.log"),
         )?;
-        self.wait_ready("gateway", &format!("http://127.0.0.1:{GATEWAY_PORT}/healthz"), &paths.logs.join("gateway.log"))
-            .await
-            .context("Agent 引擎启动失败")?;
-
+        // 后端启动不依赖 gateway，两者同时启动，最后一起等就绪（每次打开省几秒）
         self.spawn(
             "web",
             paths.python(),
@@ -83,6 +80,9 @@ impl Services {
             &env,
             &paths.logs.join("web.log"),
         )?;
+        self.wait_ready("gateway", &format!("http://127.0.0.1:{GATEWAY_PORT}/healthz"), &paths.logs.join("gateway.log"))
+            .await
+            .context("Agent 引擎启动失败")?;
         self.wait_ready("web", &format!("http://127.0.0.1:{WEB_PORT}/api/status"), &paths.logs.join("web.log"))
             .await
             .context("工作台后端启动失败")?;

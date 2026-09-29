@@ -57,6 +57,14 @@ def build_frontend(out: Path, work: Path) -> None:
     shutil.rmtree(work, ignore_errors=True)
 
 
+def tree_hash(root: Path, files: list[Path]) -> str:
+    h = hashlib.sha256()
+    for f in sorted(files):
+        h.update(f.relative_to(root).as_posix().encode())
+        h.update(f.read_bytes())
+    return h.hexdigest()[:16]
+
+
 def apply_patches(out: Path) -> None:
     patches = sorted((ROOT / "patches").glob("*.patch"))
     # out 位于本仓库内部，git 会把补丁路径当成相对仓库根目录，并静默跳过目录外的文件。
@@ -92,12 +100,12 @@ def main() -> None:
     (out / ".upstream-rev").write_text(rev + "\n", encoding="utf-8")
     # 内容指纹：分发的代码只要有任何变化就会变。桌面壳据此判断是否要把新代码同步到用户数据目录
     # （只看版本号和上游 commit 不够：只改我们自己的前端或补丁时，这两个都不变）
-    h = hashlib.sha256()
-    for f in sorted(p for p in out.rglob("*") if p.is_file() and p.name != ".build-id"):
-        h.update(f.relative_to(out).as_posix().encode())
-        h.update(f.read_bytes())
-    build_id = h.hexdigest()[:16]
+    build_id = tree_hash(out, [p for p in out.rglob("*") if p.is_file() and p.name not in (".build-id", ".agent-id")])
     (out / ".build-id").write_text(build_id + "\n", encoding="utf-8")
+    # Agent 配置指纹：只覆盖 Agent 配置（bootstrap/configure.py）用到的内容——技能、人设文件、
+    # 查询 workspace 的 Python 代码。只改界面时它不变，升级就能跳过重新配置 Agent 这一步
+    agent_files = [p for d in ("skills", "openclaw", "easel") for p in (out / d).rglob("*") if p.is_file()]
+    (out / ".agent-id").write_text(tree_hash(out, agent_files) + "\n", encoding="utf-8")
     size = sum(f.stat().st_size for f in out.rglob("*") if f.is_file())
     log(f"完成：上游 {rev}，内容指纹 {build_id}，共 {size / 1e6:.0f} MB")
 
