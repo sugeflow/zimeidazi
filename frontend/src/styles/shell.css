@@ -400,3 +400,37 @@
 .dz-msg-error details { font-size: var(--dz-fs-xs); color: var(--dz-ink-3); margin-top: 2px; }
 .dz-msg-error summary { cursor: pointer; width: fit-content; }
 .dz-msg-error code { display: block; margin-top: 6px; white-space: pre-wrap; word-break: break-all; font-size: 11.5px; color: var(--dz-ink-2); }
+
+/* ---- 设置 ---- */
+.dz-settings > * { max-width: 860px; }
+.dz-settings section .dz-h2 { margin-bottom: 10px; }
+.dz-settings .dz-card { padding: 4px 20px; }
+.dz-set-row { display: flex; align-items: center; gap: 20px; padding: 16px 0; }
+.dz-set-row + .dz-set-row { border-top: 1.5px solid var(--dz-line); }
+.dz-set-row__text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.dz-set-row__text b { font-size: var(--dz-fs-md); color: var(--dz-ink); }
+.dz-set-row__text span { font-size: var(--dz-fs-sm); color: var(--dz-ink-2); line-height: 1.6; }
+.dz-set-row__act { flex: none; }
+.dz-set-path { font: 500 12.5px/1.4 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; background: var(--dz-surface-2); padding: 1px 6px; border-radius: 6px; word-break: break-all; }
+
+/* ---- 新手引导 ---- */
+.dz-guide { width: min(560px, 100%); max-height: calc(100vh - 48px); overflow-y: auto; padding: 22px 26px 20px; }
+.dz-guide__welcome { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 14px; padding: 12px 8px 4px; }
+.dz-guide__welcome .dz-sub { max-width: 400px; line-height: 1.7; }
+.dz-guide__head { display: flex; align-items: center; justify-content: space-between; margin: -6px -10px 0 0; }
+.dz-guide__head .dz-icon-btn { font-size: 22px; }
+.dz-guide__steps { display: flex; gap: 6px; margin: 8px 0 18px; }
+.dz-guide__steps i { flex: 1; height: 5px; border-radius: var(--dz-r-pill); background: var(--dz-surface-2); }
+.dz-guide__steps i.is-on { background: var(--dz-coral); }
+.dz-guide__q { display: flex; flex-direction: column; gap: 4px; margin-top: 18px; }
+.dz-guide__q > b { font-size: var(--dz-fs-sm); color: var(--dz-ink); }
+.dz-guide__q > span { font-size: var(--dz-fs-xs); color: var(--dz-ink-2); }
+.dz-guide__opts { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+.dz-guide__opts > .dz-input { flex-basis: 100%; }
+.dz-guide__chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.dz-guide__chips .dz-chip { height: 30px; font-size: var(--dz-fs-xs); }
+.dz-guide__links { flex-basis: 100%; display: flex; flex-direction: column; gap: 8px; }
+.dz-guide__links label { display: flex; align-items: center; gap: 10px; font-size: var(--dz-fs-sm); color: var(--dz-ink-2); }
+.dz-guide__links label span { width: 48px; flex: none; }
+.dz-guide__actions { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 24px; width: 100%; }
+.dz-guide__welcome .dz-guide__actions { justify-content: center; }

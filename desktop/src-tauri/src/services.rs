@@ -238,6 +238,12 @@ pub fn child_env(paths: &Paths) -> HashMap<String, OsString> {
     set("USERPROFILE", paths.home.clone().into_os_string());
     set("EASEL_ROOT", paths.app.clone().into_os_string());
     set("EASEL_PORT", WEB_PORT.to_string().into());
+    // 只监听本机（补丁 0002），局域网里的其他设备连不上
+    set("EASEL_HOST", "127.0.0.1".into());
+    // 给我们自己的后端模块（dazi/）用：设置页显示版本、打开日志目录
+    set("DAZI_APP_VERSION", env!("CARGO_PKG_VERSION").into());
+    set("DAZI_DATA_DIR", paths.root.clone().into_os_string());
+    set("DAZI_LOGS_DIR", paths.logs.clone().into_os_string());
     set("PLAYWRIGHT_BROWSERS_PATH", paths.browsers.clone().into_os_string());
     set("EASEL_RAW_STREAM_PATH", paths.logs.join("raw-stream.jsonl").into_os_string());
     set("PYTHONUTF8", "1".into());

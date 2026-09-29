@@ -20,8 +20,8 @@ import CalendarPage from './components/CalendarPage';
 import IdeasPage from './components/IdeasPage';
 import PublishPage from './components/PublishPage';
 import BreakdownPage from './components/BreakdownPage';
-import OnboardingWizard from './components/OnboardingWizard';
-import SettingsPanel from './components/SettingsPanel';
+import { Welcome, Wizard } from './pages/Onboarding';
+import SettingsPage from './pages/SettingsPage';
 import { fetchStatus, fetchPersonas, streamChat, fetchLastTurn, stopChat } from './lib/api';
 import type { PersonaItem, UploadedFile, ChatQuestion } from './lib/api';
 import { questionStatus } from './lib/api';
@@ -69,7 +69,6 @@ export default function App() {
   const [gatewayStatus, setGatewayStatus] = useState('connecting');
   const [showRecommend, setShowRecommend] = useState(false);
   const [showWizard, setShowWizard] = useState(false);
-  const [settingsOpen, setSettingsOpen] = useState(false);
 
   // 对话里的「产物路径 → 内容库」跳转：linkifyOutputs 把目录路径生成为
   // `#/outputs/<路径>` 锚点，这里监听 hashchange 切页并带上下文，随后清掉 hash
@@ -683,7 +682,7 @@ export default function App() {
         return updated;
       });
       setActiveSessionId(newSession.id);
-      navigate('accounts', 'persona');
+      navigate('create');
     }).catch(() => {});
   }, [navigate]);
 
@@ -847,6 +846,8 @@ export default function App() {
             )}
           </TabbedPage>
         );
+      case 'settings':
+        return <SettingsPage onReplayGuide={() => setShowRecommend(true)} />;
       default:
         return null;
     }
@@ -880,7 +881,6 @@ export default function App() {
         onPersonaChange={handlePersonaChange} onNewPersona={() => setShowWizard(true)}
         counts={counts} membership={null}
         gatewayOnline={gatewayStatus === 'connecting' ? null : gatewayStatus === 'connected'}
-        onOpenSettings={() => setSettingsOpen(true)}
       />
       <main className="main-content">
         <div className="page-host">
@@ -888,31 +888,14 @@ export default function App() {
         </div>
       </main>
 
-      {/* 首次使用：推荐配置画像 */}
-      {showRecommend && (
-        <div className="overlay">
-          <div className="modal" style={{ width: 420, maxWidth: '100%', textAlign: 'center' }}>
-            <div style={{ fontSize: 40 }}>👋</div>
-            <h2 style={{ margin: '12px 0 8px', fontSize: 20 }}>欢迎使用自媒搭子</h2>
-            <p style={{ color: 'var(--text-secondary)', fontSize: 14, lineHeight: 1.6 }}>
-              配置你的账号画像，生成的内容会更贴合你的风格、受众和平台调性。<br />
-              大约 2 分钟，也可以随时在侧栏「+ 新建画像」补配。
-            </p>
-            <div style={{ display: 'flex', gap: 10, marginTop: 20, justifyContent: 'center' }}>
-              <button className="btn" onClick={dismissRecommend}>先用通用模式</button>
-              <button className="btn btn-primary" onClick={openWizard}>开始配置</button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* 首次使用：欢迎 → 3 步问答 */}
+      {showRecommend && <Welcome onStart={openWizard} onSkip={dismissRecommend} />}
 
       {/* 画像配置向导 */}
       {showWizard && (
-        <OnboardingWizard onClose={() => setShowWizard(false)} onCreated={handleProfileCreated} />
+        <Wizard onClose={() => setShowWizard(false)} onCreated={handleProfileCreated} />
       )}
 
-      {/* 设置（统一入口：模型配置 · 环境安装 · 更多设置） */}
-      {settingsOpen && <SettingsPanel onClose={() => setSettingsOpen(false)} />}
     </div>
   );
 }

@@ -24,7 +24,6 @@ type Props = {
   counts: NavCounts;
   membership: Membership | null;
   gatewayOnline: boolean | null;
-  onOpenSettings: () => void;
 };
 
 function Item({ id, page, icon, label, count, onNavigate }: {
@@ -121,9 +120,7 @@ export default function Nav(p: Props) {
         ) : (
           <div className="dz-vip"><b>测试版</b><span>免费体验中，正式版上线后需要激活</span></div>
         )}
-        <button className="dz-nav__item" onClick={p.onOpenSettings}>
-          <span className="dz-nav__icon"><IconSettings /></span><span className="dz-nav__label">设置</span>
-        </button>
+        {nav('settings', <IconSettings />, '设置')}
       </div>
     </aside>
   );

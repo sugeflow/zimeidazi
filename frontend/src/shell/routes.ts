@@ -4,7 +4,7 @@ export type PageId =
   | 'today'
   | 'inspire' | 'create' | 'works'
   | 'publish' | 'engage' | 'data'
-  | 'accounts' | 'skills';
+  | 'accounts' | 'skills' | 'settings';
 
 export type TabId =
   // 找灵感

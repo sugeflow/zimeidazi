@@ -36,3 +36,11 @@ export function friendlyError(raw: string): { title: string; desc: string } {
   }
   return { title: '这一步没做成', desc: '点「重试」再来一次；一直不行的话，把详情发给客服。' };
 }
+
+/** 文件大小：1.2 GB / 356 MB / 12 KB */
+export function formatBytes(n: number): string {
+  if (n >= 1e9) return `${(n / 1e9).toFixed(1)} GB`;
+  if (n >= 1e6) return `${Math.round(n / 1e6)} MB`;
+  if (n >= 1e3) return `${Math.round(n / 1e3)} KB`;
+  return `${n} B`;
+}

@@ -2,6 +2,7 @@
 
 - 去掉 README 素材、官网展示素材、测试、git 元数据等（约 435MB）
 - 构建我们自己的前端（仓库根目录 frontend/，复制自上游后重构），替换上游前端，只保留 dist
+- 放入我们自己的后端模块（server/dazi → dazi/，挂在 /api/dazi/*）
 - 按顺序打上 patches/*.patch
 
 用法：
@@ -93,6 +94,7 @@ def main() -> None:
     shutil.copytree(UPSTREAM, out, ignore=ignore, symlinks=True)
     (out / "outputs").mkdir()
     build_frontend(out, out.parent / "_frontend_work")
+    shutil.copytree(ROOT / "server" / "dazi", out / "dazi", ignore=shutil.ignore_patterns(*EXCLUDE_NAMES))
     apply_patches(out)
 
     rev = subprocess.run(["git", "rev-parse", "--short", "HEAD"], cwd=UPSTREAM,
