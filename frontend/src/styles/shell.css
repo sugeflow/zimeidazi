@@ -510,3 +510,7 @@
 .dz-work-detail__grid .dz-work__thumb { border-radius: var(--dz-r); box-shadow: var(--dz-shadow-soft); }
 .dz-work-detail .dz-md { max-width: 720px; }
 .dz-work-detail ul.dz-card { padding: 6px; margin: 0; }
+
+/* 账号定位：每个维度的 Markdown 自带一级标题，和卡片外的标题重复 */
+.profile-content > h1:first-child { display: none; }
+.profile-content > h1:first-child + * { margin-top: 0; }

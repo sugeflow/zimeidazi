@@ -3,6 +3,8 @@ import { fetchPersonaFiles, savePersonaFile, deletePersona, fetchAccountAnalytic
 import type { PersonaFile, AccountAnalytics } from '../lib/api';
 import { renderMarkdown } from '../lib/sanitize';
 import { confirmDialog } from '../ui/dialog';
+import type { PersonaItem } from '../lib/api';
+import { Button, Chip, EmptyState } from '../ui';
 
 // 粉丝量级：把粉丝数映射成人话档位（画像里“粉丝量级”一栏要的是量级而非精确值）
 function fanTier(n: number): string {
@@ -52,6 +54,8 @@ function mergeWechatBlock(existing: string, block: string): string {
 
 interface ProfilePageProps {
   persona: string;
+  personas: PersonaItem[];
+  onSelect: (name: string) => void;
   onNewProfile: () => void;
   onDeleted: (name: string) => void;
 }
@@ -62,10 +66,10 @@ const DIM_META: Record<string, { label: string; icon: string }> = {
   'audience.md': { label: '目标受众', icon: '👥' },
   'platforms.md': { label: '平台运营', icon: '📱' },
   'preferences.md': { label: '偏好与红线', icon: '⚖️' },
-  'memory.md': { label: '经验沉淀', icon: '🧠' },
+  'memory.md': { label: '搭子记住的经验', icon: '🧠' },
 };
 
-export default function ProfilePage({ persona, onNewProfile, onDeleted }: ProfilePageProps) {
+export default function ProfilePage({ persona, personas, onSelect, onNewProfile, onDeleted }: ProfilePageProps) {
   const [files, setFiles] = useState<PersonaFile[]>([]);
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const [editing, setEditing] = useState(false);
@@ -88,7 +92,7 @@ export default function ProfilePage({ persona, onNewProfile, onDeleted }: Profil
         setFiles(d.files);
         setDrafts(Object.fromEntries(d.files.map((f) => [f.filename, f.content])));
       })
-      .catch(() => { if (!ignore) setError('加载画像失败'); })
+      .catch(() => { if (!ignore) setError('账号定位没读出来，稍后再试'); })
       .finally(() => { if (!ignore) setLoading(false); });
     return () => { ignore = true; };
   }, [persona]);
@@ -100,7 +104,7 @@ export default function ProfilePage({ persona, onNewProfile, onDeleted }: Profil
     try {
       await savePersonaFile(persona, filename, drafts[filename] ?? '');
       setFiles((prev) => prev.map((f) => f.filename === filename ? { ...f, content: drafts[filename] ?? '' } : f));
-      showToast(`已保存 ${DIM_META[filename]?.label || filename} ✓`);
+      showToast(`已保存「${DIM_META[filename]?.label || filename}」`);
     } catch (e) {
       showToast(e instanceof Error ? e.message : '保存失败');
     } finally {
@@ -115,7 +119,7 @@ export default function ProfilePage({ persona, onNewProfile, onDeleted }: Profil
     try {
       const a = await fetchAccountAnalytics('wechat-oa');
       if (!a.loggedIn) {
-        showToast('公众号后台未登录：请先到「账号」页扫码登录后再抓取');
+        showToast('公众号还没登录：先到「平台账号」里扫码登录');
         return;
       }
       const base = files.find((f) => f.filename === filename)?.content ?? '';
@@ -124,7 +128,7 @@ export default function ProfilePage({ persona, onNewProfile, onDeleted }: Profil
       // 同步更新 files（视图）与 drafts（若正在编辑也一致），无需手动保存
       setFiles((prev) => prev.map((f) => f.filename === filename ? { ...f, content: merged } : f));
       setDrafts((p) => ({ ...p, [filename]: merged }));
-      showToast(`已抓取并更新画像（粉丝 ${a.followers ?? 0}，已发表 ${a.posts ?? 0} 篇）✓`);
+      showToast(`已更新（粉丝 ${a.followers ?? 0}，已发表 ${a.posts ?? 0} 篇）`);
     } catch (e) {
       showToast(e instanceof Error ? `抓取失败：${e.message}` : '抓取失败（可能未登录或平台改版）');
     } finally {
@@ -138,7 +142,7 @@ export default function ProfilePage({ persona, onNewProfile, onDeleted }: Profil
     try {
       await deletePersona(persona);
       onDeleted(persona);
-      showToast(`已删除画像「${persona}」`);
+      showToast(`已删除「${persona}」`);
     } catch (e) {
       showToast(e instanceof Error ? e.message : '删除失败');
     } finally {
@@ -146,35 +150,38 @@ export default function ProfilePage({ persona, onNewProfile, onDeleted }: Profil
     }
   };
 
+  // 顶部：所有账号定位，点一下切换（和左上角的切换是同一个）
+  const picker = (
+    <div className="dz-inspire__chips">
+      {personas.map((x) => <Chip key={x.name} selected={x.name === persona} onClick={() => onSelect(x.name)}>{x.name}</Chip>)}
+      <Chip onClick={onNewProfile}>+ 新建账号定位</Chip>
+    </div>
+  );
+
   if (!persona) {
     return (
-      <div className="profile-page">
-        <h1 className="page-title">用户画像 Profile</h1>
-        <div className="empty-state" style={{ height: '70%' }}>
-          <div className="empty-icon">👤</div>
-          <h3>还没有选择画像</h3>
-          <p>画像沉淀你的定位、风格、受众与红线，生成内容会更贴合你的人设。</p>
-          <button className="btn btn-primary" onClick={onNewProfile}>+ 新建画像</button>
-        </div>
+      <div className="dz-page">
+        {personas.length > 0 && picker}
+        <EmptyState
+          title={personas.length ? '选一个账号定位看看' : '还没有账号定位'}
+          desc="账号定位记着你做什么内容、给谁看、什么调性、哪些不碰。搭子每次写东西都会参考它，写出来更像你。"
+          actions={!personas.length && <Button variant="primary" onClick={onNewProfile}>新建账号定位</Button>}
+        />
       </div>
     );
   }
 
   return (
     <div className="profile-page">
-      <div className="profile-head">
+      {picker}
+      <div className="profile-head" style={{ marginTop: 18 }}>
         <div>
-          <h1 className="page-title">{persona}</h1>
-          <p className="page-subtitle">六个维度构成一个完整人设，可随时编辑保存。</p>
+          <h2 className="dz-title">{persona}</h2>
+          <p className="dz-muted">下面这些搭子每次都会参考。写得不对的地方，点「修改」直接改。</p>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
-          <button className={`btn ${editing ? 'btn-primary' : ''}`} onClick={() => setEditing((v) => !v)}>
-            {editing ? '完成编辑' : '✏️ 编辑资料'}
-          </button>
-          <button className="btn" style={{ color: 'var(--red)', borderColor: 'var(--red)' }}
-            disabled={deleting} onClick={handleDelete}>
-            {deleting ? '删除中…' : '🗑 删除画像'}
-          </button>
+          <Button variant="ghost" disabled={deleting} onClick={handleDelete}>{deleting ? '删除中…' : '删除'}</Button>
+          <Button variant={editing ? 'primary' : 'secondary'} onClick={() => setEditing((v) => !v)}>{editing ? '改好了' : '修改'}</Button>
         </div>
       </div>
 
@@ -193,9 +200,9 @@ export default function ProfilePage({ persona, onNewProfile, onDeleted }: Profil
                 <div style={{ display: 'flex', gap: 8 }}>
                   {f.filename === 'platforms.md' && (
                     <button className="btn btn-sm" disabled={fetchingWx}
-                      title="用已登录的公众号后台会话抓取粉丝/内容数据，写入本栏（与数据中心同源）"
+                      title="从已登录的公众号后台读粉丝数和发文数，写到这一栏"
                       onClick={() => handleFetchWechat(f.filename)}>
-                      {fetchingWx ? '抓取中…' : '📊 抓取公众号数据'}
+                      {fetchingWx ? '读取中…' : '读取公众号数据'}
                     </button>
                   )}
                   {editing && (
@@ -209,7 +216,7 @@ export default function ProfilePage({ persona, onNewProfile, onDeleted }: Profil
               {editing ? (
                 <textarea
                   className="field"
-                  style={{ minHeight: 150, fontFamily: "'SF Mono','Consolas',monospace", fontSize: 13 }}
+                  style={{ minHeight: 150, fontSize: 14, lineHeight: 1.7 }}
                   value={drafts[f.filename] ?? ''}
                   onChange={(e) => setDrafts((p) => ({ ...p, [f.filename]: e.target.value }))}
                 />

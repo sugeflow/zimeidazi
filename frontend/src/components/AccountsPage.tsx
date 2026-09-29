@@ -40,6 +40,9 @@ function Avatar({ url, name }: { url?: string; name: string }) {
   return <div className="account-avatar account-avatar-fallback">{initial}</div>;
 }
 
+// 常用的平台排前面
+const ORDER = ['xiaohongshu', 'douyin', 'weixin-channels', 'kuaishou', 'bilibili', 'wechat-oa', 'zhihu'];
+
 export default function AccountsPage() {
   const [accounts, setAccounts] = useState<AccountItem[]>([]);
   const [err, setErr] = useState('');
@@ -185,7 +188,7 @@ export default function AccountsPage() {
     try {
       const res = await startLogin(a.platform);
       if (res.mode === 'terminal') {
-        setTerminalMsg(res.message || '请在终端登录');
+        setTerminalMsg(res.message || '这个平台暂时不能在软件里登录');
         return;
       }
       if (res.mode === 'credentials') { openCred(a); return; }
@@ -271,8 +274,8 @@ export default function AccountsPage() {
   };
 
   const badge = (a: AccountItem) => {
-    if (!a.supported) return <span className="badge">待重写</span>;
-    if (whoami[a.platform] === 'loading') return <span className="badge">校验中…</span>;
+    if (!a.supported) return <span className="badge">暂不支持</span>;
+    if (whoami[a.platform] === 'loading') return <span className="badge">检查中…</span>;
     if (effLoggedIn(a)) return <span className="badge badge-ok">✓ 已登录</span>;
     return <span className="badge">未登录</span>;
   };
@@ -283,11 +286,11 @@ export default function AccountsPage() {
         <div>
           <h1 className="page-title">账号登录 Accounts</h1>
           <p className="page-subtitle">
-            用手机 App 扫码登录，登录态本地持久化，之后发布免登。<br />
-            ⚠️ 平台可能对机房/代理 IP 判风险导致二维码弹不出，需干净/家宽 IP，或在正常网络登录后拷贝登录态目录。
+            用手机上的 App 扫一扫就能登录，登录一次之后，发布就不用再登了。<br />
+            二维码出不来的话，先关掉 VPN 或网络加速器再试。
           </p>
         </div>
-        <button className="btn btn-sm" onClick={load}>⟳ 刷新</button>
+        <button className="btn btn-sm" onClick={load}>刷新</button>
       </div>
 
       {err && <div style={{ color: 'var(--red)', fontSize: 13, marginTop: 12 }}>{err}</div>}
@@ -296,7 +299,7 @@ export default function AccountsPage() {
       )}
 
       <div className="accounts-grid">
-        {accounts.map((a) => {
+        {[...accounts].sort((x, y) => ORDER.indexOf(x.platform) - ORDER.indexOf(y.platform)).map((a) => {
           const w = whoami[a.platform];
           const info = w && w !== 'loading' ? w : null;
           const logged = effLoggedIn(a);
@@ -314,7 +317,7 @@ export default function AccountsPage() {
                 </div>
               )}
               {!logged && (
-                <div className="account-card-note">{a.note ? a.note : `后端：${a.name}`}</div>
+                <div className="account-card-note">{a.note || (a.backend === 'wechat-oa' ? '用公众号管理员的微信扫码' : `用${a.name} App 扫码登录`)}</div>
               )}
 
               <div style={{ display: 'flex', gap: 8, marginTop: 'auto' }}>
@@ -323,7 +326,7 @@ export default function AccountsPage() {
                     <button className="btn btn-sm" style={{ flex: 1 }}
                       disabled={busy === a.platform || busy === a.platform + ':mp' || w === 'loading'}
                       onClick={() => runWhoami(a.platform)}>
-                      {w === 'loading' ? '校验中…' : '校验账号'}
+                      {w === 'loading' ? '检查中…' : '检查登录'}
                     </button>
                     <button className="btn btn-sm btn-ghost" style={{ flex: 1 }}
                       disabled={logoutBusy === a.platform}

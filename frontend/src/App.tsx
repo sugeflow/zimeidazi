@@ -847,7 +847,7 @@ export default function App() {
           >
             {tabOf('accounts') === 'platforms' && <AccountsPage />}
             {tabOf('accounts') === 'persona' && (
-              <ProfilePage persona={selectedPersona} onNewProfile={() => setShowWizard(true)} onDeleted={handleProfileDeleted} />
+              <ProfilePage persona={selectedPersona} personas={personas} onSelect={handlePersonaChange} onNewProfile={() => setShowWizard(true)} onDeleted={handleProfileDeleted} />
             )}
           </TabbedPage>
         );

@@ -170,7 +170,7 @@ export default function PublishPage({ persona }: PublishPageProps) {
     try {
       setCheckResult(await performPrecheck());
     } catch (e) {
-      setCheckResult(e instanceof Error ? e.message : '预检失败');
+      setCheckResult(e instanceof Error ? e.message : '检查没做成，再试一次');
     } finally { setChecking(false); }
   };
 
@@ -179,14 +179,14 @@ export default function PublishPage({ persona }: PublishPageProps) {
     if (empty || publishing || checking) return;
     const targets = PLATFORMS.filter((p) => platforms.includes(p.key) && PUBLISHABLE.has(p.key));
     if (targets.length === 0) {
-      showToast('所选平台暂不支持一键发布（B站请用「复制」或终端 biliup）');
+      showToast('选中的平台暂时不能一键发布，可以点「复制」后自己去发');
       return;
     }
     setChecking(true);
     try {
       setCheckResult(await performPrecheck());
     } catch (e) {
-      setCheckResult(`预检失败：${e instanceof Error ? e.message : '未知错误'}\n\n预检仅用于提醒，不会阻止你继续发布。`);
+      setCheckResult(`检查没做成：${e instanceof Error ? e.message : '未知原因'}\n\n检查只是提醒，不影响你继续发布。`);
     } finally {
       setChecking(false);
     }
@@ -207,7 +207,7 @@ export default function PublishPage({ persona }: PublishPageProps) {
         continue;
       }
       if (VIDEO_ONLY.has(t.key) && !selectedMedia.some((p) => VIDEO_RE.test(p))) {
-        setPub((r) => ({ ...r, [t.key]: { status: 'fail', msg: `${t.label}只能发视频，请从内容库选一个视频` } }));
+        setPub((r) => ({ ...r, [t.key]: { status: 'fail', msg: `${t.label}只能发视频，请从作品库选一个视频` } }));
         continue;
       }
       setPub((r) => ({ ...r, [t.key]: { status: 'publishing', msg: '发布中…可能需 1-2 分钟' } }));
@@ -297,18 +297,18 @@ export default function PublishPage({ persona }: PublishPageProps) {
     <div className="publish-page">
       <div className="publish-editor">
         <h1 className="page-title"><IconPublish size={21} /> 发布中心</h1>
-        <p className="page-subtitle">一次编辑 → AI 一键改写成各平台版本 → 预检 → 附媒体 → 一键真发布。</p>
+        <p className="page-subtitle">写一份内容，搭子帮你改成各平台的版本，检查一遍，选好图片或视频，就能一起发出去。</p>
 
         <label className="field-label">标题</label>
-        <input className="field" value={title} placeholder="标题（部分平台需要）"
+        <input className="field" value={title} placeholder="标题（小红书、知乎、公众号需要）"
           onChange={(e) => setTitle(e.target.value)} />
-        <label className="field-label">正文（母版）</label>
+        <label className="field-label">正文</label>
         <textarea className="field" style={{ minHeight: 180 }} value={body}
-          placeholder="写下你的内容，右侧按各平台规则实时预览；点「一键适配」让 AI 分平台改写…"
+          placeholder="写下你的内容，右边能看到每个平台的效果；点「改成各平台版本」让搭子帮你改…"
           onChange={(e) => setBody(e.target.value)} />
 
-        <label className="field-label">话题标签 <span style={{ color: 'var(--text-secondary)', fontWeight: 400, fontSize: 12 }}>（逗号分隔，如「AI,职场,干货」；小红书会用 # 联想真正绑定话题）</span></label>
-        <input className="field" value={tags} placeholder="AI,职场,干货"
+        <label className="field-label">话题标签 <span style={{ color: 'var(--text-secondary)', fontWeight: 400, fontSize: 12 }}>（用逗号隔开，比如：旅行,攻略,国庆）</span></label>
+        <input className="field" value={tags} placeholder="旅行,攻略,国庆"
           onChange={(e) => setTags(e.target.value)} />
 
         <label className="field-label">发布平台</label>
@@ -320,8 +320,8 @@ export default function PublishPage({ persona }: PublishPageProps) {
         </div>
 
         <label className="field-label" style={{ marginTop: 14 }}>
-          媒体附件 {selectedMedia.length > 0 && <span className="pv-badge">{selectedMedia.length} 个</span>}
-          <span style={{ color: 'var(--text-secondary)', fontWeight: 400, fontSize: 12 }}>（小红书/抖音/快手/微信视频号/B站必需，从内容库选；抖音、视频号、B站须为视频）</span>
+          图片和视频 {selectedMedia.length > 0 && <span className="pv-badge">{selectedMedia.length} 个</span>}
+          <span style={{ color: 'var(--text-secondary)', fontWeight: 400, fontSize: 12 }}>（小红书、快手要图片或视频；抖音、视频号、B 站只能发视频）</span>
         </label>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
           <button className="btn btn-sm" onClick={() => setShowPicker((v) => !v)}>
@@ -337,7 +337,7 @@ export default function PublishPage({ persona }: PublishPageProps) {
         </div>
         {showPicker && (
           <div className="media-grid">
-            {mediaFiles.length === 0 && <div className="dash-empty">内容库暂无图片/视频</div>}
+            {mediaFiles.length === 0 && <div className="dash-empty">作品库里还没有图片或视频</div>}
             {mediaFiles.slice(0, 40).map((f) => (
               <div key={f.path}
                 className={`media-cell ${selectedMedia.includes(f.path) ? 'sel' : ''}`}
@@ -356,17 +356,17 @@ export default function PublishPage({ persona }: PublishPageProps) {
             <button className="btn btn-sm" onClick={stopAdapt}><IconStop size={13} /> 停止生成</button>
           ) : (
             <button className="btn btn-sm btn-primary" disabled={empty || platforms.length === 0} onClick={adapt}>
-              <IconSkills size={14} /> 一键适配各平台
+              <IconSkills size={14} /> 改成各平台版本
             </button>
           )}
           <button className="btn btn-sm" disabled={empty || checking || adapting} onClick={check}>
-            <IconCheck size={14} /> {checking ? '预检中…' : '发布前预检'}
+            <IconCheck size={14} /> {checking ? '检查中…' : '发之前检查一下'}
           </button>
           <button className="btn btn-sm" disabled={empty} onClick={() => addToCalendar(platforms[0] || 'xiaohongshu')}>
-            <IconCalendar size={14} /> 存草稿并排期
+            <IconCalendar size={14} /> 先存着，排进日历
           </button>
           <button className="btn btn-sm btn-primary" disabled={empty || publishing || checking || !canPublish}
-            title={canPublish ? '真实发布到已登录平台' : '所选平台无一键发布（B站走终端 biliup）'}
+            title={canPublish ? '发布到已登录的平台' : '选中的平台暂时不能一键发布，可以复制后自己发'}
             onClick={publishAll}>
             <IconPublish size={14} /> {publishing ? '发布中…' : '一键发布'}
           </button>
@@ -379,7 +379,7 @@ export default function PublishPage({ persona }: PublishPageProps) {
         <p className="publish-saved-note">草稿已自动保存，切换页面/刷新回来内容都在。一键发布仅对「已登录 + 媒体齐全」的平台生效。</p>
         {checkResult && (
           <div className="panel" style={{ marginTop: 14 }}>
-            <div className="panel-title"><IconCheck size={14} /> 发布前预检</div>
+            <div className="panel-title"><IconCheck size={14} /> 检查结果</div>
             <div className="skill-body-md" dangerouslySetInnerHTML={{ __html: renderMarkdown(checkResult) }} />
           </div>
         )}

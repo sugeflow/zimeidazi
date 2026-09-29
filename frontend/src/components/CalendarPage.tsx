@@ -129,7 +129,7 @@ export default function CalendarPage() {
       <div className="page-head">
         <div>
           <h1 className="page-title"><IconCalendar size={21} /> 内容日历</h1>
-          <p className="page-subtitle">每天各平台发什么一目了然——发布自动落库，可记录排期与平台活动。</p>
+          <p className="page-subtitle">每天发什么一目了然。发布过的内容会自动记在这里，也可以自己排期、记下平台活动。</p>
         </div>
         <div className="cal-nav">
           <button className="btn btn-sm" onClick={() => shift(-1)}><span style={{ transform: 'rotate(180deg)', display: 'inline-flex' }}><IconChevron size={14} /></span></button>
@@ -142,7 +142,7 @@ export default function CalendarPage() {
       {showSuggest && suggestions.length > 0 && (
         <div className="cal-suggest">
           <div className="cal-suggest-head">
-            <span>📅 日历建议（近 {ctx?.window_days ?? 14} 天）</span>
+            <span>搭子的排期建议（最近 {ctx?.window_days ?? 14} 天）</span>
             <button className="icon-btn" onClick={() => setShowSuggest(false)}>×</button>
           </div>
           <ul>{suggestions.map((s, i) => <li key={i}>{s}</li>)}</ul>
