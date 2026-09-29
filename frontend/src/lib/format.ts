@@ -22,6 +22,16 @@ export function formatHot(hot: string): string {
 /** 对话出错时给用户看的话；原始报错收在「详情」里，排查时再看 */
 export function friendlyError(raw: string): { title: string; desc: string } {
   const s = raw.toLowerCase();
+  if (/会员已到期|已被停用/.test(raw)) {
+    return { title: '会员到期了', desc: '到「设置 → 会员」输入新的激活码续费，就能接着用。' };
+  }
+  if (/本月.*额度用完/.test(raw)) {
+    const m = raw.match(/本月.*额度用完了[^"'}]*/);
+    return { title: '本月额度用完了', desc: `${m ? m[0] : ''}。下个月 1 号自动恢复。` };
+  }
+  if (/还没有激活|激活信息失效/.test(raw)) {
+    return { title: '还没有激活', desc: '到「设置 → 会员」输入激活码。' };
+  }
   if (/insufficient balance|billing|quota|余额|402/.test(s)) {
     return { title: '模型额度用完了', desc: '搭子用的 AI 模型账户余额不足，充值后点「重试」就能继续。' };
   }

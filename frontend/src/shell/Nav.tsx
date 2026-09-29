@@ -11,8 +11,7 @@ import logo from '../assets/brand/logo.png';
 
 export interface NavCounts { today?: number; engage?: number }
 
-/** 会员信息；M3 接入激活码之前为 null */
-export interface Membership { daysLeft: number; usedPct: number }
+import type { Membership } from '../lib/dazi';
 
 type Props = {
   page: PageId;
@@ -22,6 +21,7 @@ type Props = {
   onPersonaChange: (name: string) => void;
   onNewPersona: () => void;
   counts: NavCounts;
+  /** 还没查到时为 null */
   membership: Membership | null;
   gatewayOnline: boolean | null;
 };
@@ -82,6 +82,28 @@ function PersonaSwitcher({ personas, persona, onChange, onNew }: {
   );
 }
 
+/** 会员卡：剩余天数、本月额度；没激活或到期时点一下去设置 */
+function MemberCard({ m, onOpen }: { m: Membership | null; onOpen: () => void }) {
+  if (!m) return null;
+  if (!m.activated) {
+    return <button className="dz-vip dz-vip--btn" onClick={onOpen}><b>还没激活</b><span>点这里输入激活码</span></button>;
+  }
+  if (m.state !== 'ok') {
+    const title = m.state === 'expired' ? '会员已到期' : m.state === 'offline' ? '连不上搭子云' : '激活信息失效';
+    return <button className={`dz-vip dz-vip--btn${m.state === 'offline' ? '' : ' dz-vip--warn'}`} onClick={onOpen}><b>{title}</b><span>{m.state === 'offline' ? '检查一下网络' : '点这里续费'}</span></button>;
+  }
+  return (
+    <button className={`dz-vip dz-vip--btn${m.daysLeft <= 3 ? ' dz-vip--warn' : ''}`} onClick={onOpen}>
+      <b>月度会员</b>
+      <span>本月额度已用 {m.usedPct}%</span>
+      <div className="dz-progress dz-progress--sun" role="progressbar" aria-label="本月额度" aria-valuenow={m.usedPct} aria-valuemin={0} aria-valuemax={100}>
+        <span style={{ width: `${m.usedPct}%` }} />
+      </div>
+      <span>{m.daysLeft > 0 ? `还有 ${m.daysLeft} 天到期` : '今天到期'}</span>
+    </button>
+  );
+}
+
 export default function Nav(p: Props) {
   const nav = (id: PageId, icon: ReactNode, label: string, count?: number) => (
     <Item id={id} page={p.page} icon={icon} label={label} count={count} onNavigate={p.onNavigate} />
@@ -108,18 +130,7 @@ export default function Nav(p: Props) {
           <div className="dz-nav__alert" role="status">搭子的大脑暂时没连上，稍等一下或重启软件</div>
         )}
         {nav('accounts', <IconProfile />, '账号与定位')}
-        {p.membership ? (
-          <div className="dz-vip">
-            <b>月度会员</b>
-            <span>本月额度已用 {p.membership.usedPct}%</span>
-            <div className="dz-progress dz-progress--sun" role="progressbar" aria-label="本月额度" aria-valuenow={p.membership.usedPct} aria-valuemin={0} aria-valuemax={100}>
-              <span style={{ width: `${p.membership.usedPct}%` }} />
-            </div>
-            <span>还有 {p.membership.daysLeft} 天到期</span>
-          </div>
-        ) : (
-          <div className="dz-vip"><b>测试版</b><span>免费体验中，正式版上线后需要激活</span></div>
-        )}
+        <MemberCard m={p.membership} onOpen={() => p.onNavigate('settings')} />
         {nav('settings', <IconSettings />, '设置')}
       </div>
     </aside>

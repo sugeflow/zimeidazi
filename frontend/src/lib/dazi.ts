@@ -89,3 +89,14 @@ export interface PlatformData {
 
 export const dataOverview = () => call<PlatformData[]>('/api/dazi/data/overview');
 export const dataRefresh = (platform: string) => post<Job>(`/api/dazi/data/refresh/${platform}`);
+
+// ---------------------------------------------------------------- 会员（搭子云）
+
+export type Membership =
+  | { activated: false }
+  | { activated: true; state: 'ok'; daysLeft: number; expiresAt: number; usedPct: number; code: string;
+      used: Record<'chat' | 'image' | 'video', number>; quota: Record<'chat' | 'image' | 'video', number> }
+  | { activated: true; state: 'expired' | 'invalid' | 'offline'; message: string };
+
+export const fetchMembership = (refresh = false) => call<Membership>(`/api/dazi/membership${refresh ? '?refresh=1' : ''}`);
+export const activateCode = (code: string) => post<{ expiresAt: number }>('/api/dazi/activate', { code });

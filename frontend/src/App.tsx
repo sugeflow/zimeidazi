@@ -3,6 +3,8 @@ import Nav from './shell/Nav';
 import type { NavCounts } from './shell/Nav';
 import { DEFAULT_TAB } from './shell/routes';
 import { useMediaQuery } from './lib/useMediaQuery';
+import { fetchMembership } from './lib/dazi';
+import type { Membership } from './lib/dazi';
 import type { PageId, TabId } from './shell/routes';
 import TodayPage from './pages/TodayPage';
 import type { RunningTask } from './pages/TodayPage';
@@ -697,6 +699,17 @@ export default function App() {
   }, []);
 
   // 流式生命周期在 App，页面切换随意——ChatPage 可自由卸载/重挂，回来从 props 读流式态即可。
+  // 会员状态（搭子云）：打开时查一次，之后每 10 分钟一次
+  const [membership, setMembership] = useState<Membership | null>(null);
+  const refreshMembership = useCallback((force = false) => {
+    fetchMembership(force).then(setMembership).catch(() => { /* 后端还没起来，下次再查 */ });
+  }, []);
+  useEffect(() => {
+    refreshMembership();
+    const t = setInterval(() => refreshMembership(), 10 * 60 * 1000);
+    return () => clearInterval(t);
+  }, [refreshMembership]);
+
   const today = useToday(personasLoaded ? personas : null);
   const streamingIds = Object.keys(streams);
   const running: RunningTask[] = streamingIds.map((id) => {
@@ -857,7 +870,7 @@ export default function App() {
           </TabbedPage>
         );
       case 'settings':
-        return <SettingsPage onReplayGuide={() => setShowRecommend(true)} />;
+        return <SettingsPage membership={membership} onMembershipChange={() => refreshMembership(true)} onReplayGuide={() => setShowRecommend(true)} />;
       default:
         return null;
     }
@@ -889,7 +902,7 @@ export default function App() {
         page={currentPage} onNavigate={navigate}
         personas={personas} persona={selectedPersona}
         onPersonaChange={handlePersonaChange} onNewPersona={() => setShowWizard(true)}
-        counts={counts} membership={null}
+        counts={counts} membership={membership}
         gatewayOnline={gatewayStatus === 'connecting' ? null : gatewayStatus === 'connected'}
       />
       <main className="main-content">

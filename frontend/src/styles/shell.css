@@ -576,3 +576,14 @@
 .dz-data__notes b { font-size: var(--dz-fs-sm); font-weight: 600; color: var(--dz-ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .dz-data__notes small { font-size: 11.5px; color: var(--dz-ink-3); }
 .dz-data footer { display: flex; justify-content: flex-end; }
+
+/* ---- 会员 ---- */
+.dz-vip--btn { border: 0; text-align: left; cursor: pointer; font-family: var(--dz-font); width: 100%; transition: filter var(--dz-t-fast); }
+.dz-vip--btn:hover { filter: brightness(0.97); }
+.dz-vip--btn:focus-visible { outline: none; box-shadow: var(--dz-focus); }
+.dz-vip--warn { background: var(--dz-danger-soft); color: var(--dz-danger); }
+.dz-quota { display: grid !important; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.dz-quota > div { display: flex; flex-direction: column; gap: 4px; }
+.dz-quota span { font-size: var(--dz-fs-xs); color: var(--dz-ink-2); }
+.dz-quota b { font-size: var(--dz-fs-lg); color: var(--dz-ink); font-variant-numeric: tabular-nums; }
+.dz-quota small { font-size: var(--dz-fs-xs); color: var(--dz-ink-3); font-weight: 500; }

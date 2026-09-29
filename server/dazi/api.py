@@ -176,3 +176,28 @@ def data_refresh(platform: str) -> dict:
     if platform not in {p["platform"] for p in ops_data.platforms()}:
         raise HTTPException(404, "这个平台暂时不支持看数据")
     return ops_jobs.start("data", platform, lambda job: ops_data.refresh(job, platform))
+
+
+# ---------------------------------------------------------------- 会员（搭子云）
+
+from . import cloud  # noqa: E402
+
+
+@router.get("/membership")
+def membership(refresh: bool = False) -> dict:
+    return cloud.membership(force=refresh)
+
+
+class ActivateReq(BaseModel):
+    code: str
+
+
+@router.post("/activate")
+def activate(req: ActivateReq) -> dict:
+    code = req.code.strip()
+    if not code:
+        raise HTTPException(400, "先输入激活码")
+    try:
+        return cloud.activate(code)
+    except cloud.CloudError as e:
+        raise HTTPException(502 if e.status == 0 else 400, str(e))
