@@ -1,8 +1,8 @@
 """把 upstream/Easel 整理成随安装包分发的应用代码。
 
 - 去掉 README 素材、官网展示素材、测试、git 元数据等（约 435MB）
-- 构建 React 前端，只保留 dist
-- 按顺序打上 patches/*.patch（目前还没有）
+- 构建我们自己的前端（仓库根目录 frontend/，复制自上游后重构），替换上游前端，只保留 dist
+- 按顺序打上 patches/*.patch
 
 用法：
     python scripts/stage_easel.py --out build/easel
@@ -11,6 +11,7 @@
 from __future__ import annotations
 
 import argparse
+import os
 import shutil
 import subprocess
 import sys
@@ -24,7 +25,7 @@ IS_WIN = sys.platform == "win32"
 EXCLUDE = [
     ".git", ".github", "assets/readme", "web/static/showcase", "tests",
     "outputs", "setup.sh", "setup.ps1", "pytest.ini", "CONTRIBUTING.md", "CHANGELOG.md",
-    "README_EN.md", "web/frontend",  # 前端源码不分发，只放构建好的 dist
+    "README_EN.md", "web/frontend",  # 上游前端整个不要，换成我们构建好的 dist
 ]
 EXCLUDE_NAMES = {"__pycache__", "node_modules", ".DS_Store", ".pytest_cache"}
 
@@ -43,7 +44,7 @@ def ignore(src: str, names: list[str]) -> set[str]:
 
 
 def build_frontend(out: Path, work: Path) -> None:
-    src = UPSTREAM / "web" / "frontend"
+    src = ROOT / "frontend"
     fe = work / "frontend"
     shutil.rmtree(fe, ignore_errors=True)
     shutil.copytree(src, fe, ignore=shutil.ignore_patterns("node_modules", "dist"))
@@ -57,10 +58,14 @@ def build_frontend(out: Path, work: Path) -> None:
 
 def apply_patches(out: Path) -> None:
     patches = sorted((ROOT / "patches").glob("*.patch"))
+    # out 位于本仓库内部，git 会把补丁路径当成相对仓库根目录，并静默跳过目录外的文件。
+    # 设置 GIT_CEILING_DIRECTORIES 让 git 找不到外层仓库，按普通目录打补丁。
+    env = dict(os.environ, GIT_CEILING_DIRECTORIES=str(out.parent))
     for p in patches:
         log(f"打补丁 {p.name}")
-        subprocess.run(["git", "apply", "--whitespace=nowarn", str(p)],
-                       cwd=out, check=True)
+        subprocess.run(["git", "apply", "--whitespace=nowarn", str(p)], cwd=out, env=env, check=True)
+        # 反向检查能通过，才说明补丁确实打上了
+        subprocess.run(["git", "apply", "--check", "--reverse", str(p)], cwd=out, env=env, check=True)
     if not patches:
         log("没有补丁需要打")
 
