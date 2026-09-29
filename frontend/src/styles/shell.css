@@ -434,3 +434,49 @@
 .dz-guide__links label span { width: 48px; flex: none; }
 .dz-guide__actions { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 24px; width: 100%; }
 .dz-guide__welcome .dz-guide__actions { justify-content: center; }
+
+/* ---- 找灵感 ---- */
+.dz-inspire { padding-top: 20px; }
+.dz-inspire > * + * { margin-top: 16px; }
+.dz-inspire__bar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.dz-inspire__bar > .dz-muted { flex: 1; }
+.dz-inspire__chips { display: flex; flex-wrap: wrap; gap: 8px; margin-right: auto; }
+.dz-inspire__bar .dz-inspire__chips + .dz-muted { flex: none; }
+.dz-trends { padding: 6px 8px; max-width: 920px; }
+.dz-trend { display: flex; align-items: center; gap: 12px; padding: 10px 10px; border-radius: var(--dz-r); }
+.dz-trend + .dz-trend { border-top: 1px solid var(--dz-line); }
+.dz-trend:hover { background: var(--dz-hover); }
+.dz-trend__rank { width: 26px; flex: none; text-align: center; font: 800 var(--dz-fs-md)/1 var(--dz-font); color: var(--dz-ink-3); font-variant-numeric: tabular-nums; }
+.dz-trend__rank.is-top { color: var(--dz-coral-ink); }
+.dz-trend__text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.dz-trend__text b { font-size: var(--dz-fs-md); font-weight: 600; color: var(--dz-ink); line-height: 1.5; }
+.dz-trend__text small { font-size: var(--dz-fs-xs); color: var(--dz-ink-3); }
+
+.dz-kanban { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; align-items: start; }
+.dz-kanban__col { background: var(--dz-surface-2); border-radius: var(--dz-r-lg); padding: 12px; display: flex; flex-direction: column; gap: 10px; min-height: 160px; }
+.dz-kanban__col h3 { display: flex; align-items: center; gap: 8px; font-size: var(--dz-fs-sm); color: var(--dz-ink-2); font-weight: 600; }
+.dz-idea { background: var(--dz-surface); border: 1.5px solid var(--dz-line); border-radius: var(--dz-r); padding: 4px 4px 8px; }
+.dz-idea__main { width: 100%; display: flex; flex-direction: column; gap: 4px; text-align: left; border: 0; background: transparent; cursor: pointer; padding: 8px 8px 4px; border-radius: var(--dz-r-sm); font-family: var(--dz-font); }
+.dz-idea__main:focus-visible { outline: none; box-shadow: var(--dz-focus); }
+.dz-idea__main b { font-size: var(--dz-fs-md); color: var(--dz-ink); line-height: 1.5; }
+.dz-idea__main span { font-size: var(--dz-fs-xs); color: var(--dz-ink-2); line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.dz-idea__main small { font-size: 11px; color: var(--dz-ink-3); }
+.dz-idea__acts { display: flex; align-items: center; gap: 2px; flex-wrap: wrap; padding: 0 4px; }
+.dz-idea__acts .dz-icon-btn { margin-left: auto; width: 28px; height: 28px; }
+
+.dz-form { display: flex; flex-direction: column; gap: 10px; margin-top: 14px; }
+.dz-flash {
+  position: fixed; left: 50%; bottom: 28px; transform: translateX(-50%); z-index: 950;
+  background: var(--dz-ink); color: var(--dz-bg); padding: 10px 18px; border-radius: var(--dz-r-pill);
+  font-size: var(--dz-fs-sm); font-weight: 600; box-shadow: var(--dz-shadow-pop);
+}
+.dz-breakdown { max-width: 920px; }
+.dz-breakdown .dz-compose textarea { font-size: var(--dz-fs-md); }
+
+/* 模型输出的 Markdown */
+.dz-md { font-size: var(--dz-fs-md); line-height: 1.8; color: var(--dz-ink); }
+.dz-md h1, .dz-md h2, .dz-md h3 { font-size: var(--dz-fs-lg); margin: 1em 0 0.4em; }
+.dz-md p, .dz-md ul, .dz-md ol { margin: 0.5em 0; }
+.dz-md ul, .dz-md ol { padding-left: 1.4em; }
+.dz-md strong { color: var(--dz-ink); }
+@media (max-width: 1040px) { .dz-kanban { grid-template-columns: 1fr; } }

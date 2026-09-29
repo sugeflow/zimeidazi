@@ -1,0 +1,26 @@
+diff --git a/web/app.py b/web/app.py
+index 04e725a..ea1d9f1 100644
+--- a/web/app.py
++++ b/web/app.py
+@@ -3809,6 +3809,9 @@ def _parse_hot(obj: dict) -> list[dict]:
+     out = []
+     if isinstance(data, list):
+         for it in data:
++            if isinstance(it, str) and it.strip():  # 自媒搭子：B 站备用源返回的是纯标题列表
++                out.append({"title": it.strip(), "hot": "", "url": ""})
++                continue
+             if not isinstance(it, dict):
+                 continue
+             title = it.get("title") or it.get("word") or it.get("name") or it.get("keyword")
+@@ -3823,6 +3826,11 @@ def _parse_hot(obj: dict) -> list[dict]:
+ 
+ 
+ def _fetch_platform(pf: str) -> list[dict]:
++    # 自媒搭子：知乎、头条先用官方公开热榜（第三方源经常 403），见 dazi/trends.py
++    from dazi.trends import official_hot
++    items = official_hot(pf)
++    if items:
++        return items
+     primary, backup = TREND_SOURCES.get(pf, (None, None))
+     for url in (primary, backup):
+         if not url:

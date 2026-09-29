@@ -15,13 +15,11 @@ import AbilitiesPage from './pages/AbilitiesPage';
 import OutputsPage from './components/OutputsPage';
 import AccountsPage from './components/AccountsPage';
 import ProfilePage from './components/ProfilePage';
-import TrendsPage from './components/TrendsPage';
 import CalendarPage from './components/CalendarPage';
-import IdeasPage from './components/IdeasPage';
 import PublishPage from './components/PublishPage';
-import BreakdownPage from './components/BreakdownPage';
 import { Welcome, Wizard } from './pages/Onboarding';
 import SettingsPage from './pages/SettingsPage';
+import { BreakdownView, IdeasView, TrendsView } from './pages/InspirePages';
 import { fetchStatus, fetchPersonas, streamChat, fetchLastTurn, stopChat } from './lib/api';
 import type { PersonaItem, UploadedFile, ChatQuestion } from './lib/api';
 import { questionStatus } from './lib/api';
@@ -740,9 +738,9 @@ export default function App() {
             title="找灵感" desc="热点、选题和爆款拆解，都在这里" tab={tabOf('inspire')} onTab={setTab('inspire')}
             tabs={[{ value: 'trends', label: '热点' }, { value: 'ideas', label: '选题库' }, { value: 'breakdown', label: '拆解爆款' }, { value: 'bench', label: '对标账号' }]}
           >
-            {tabOf('inspire') === 'trends' && <TrendsPage onUseTopic={handleUseTopic} />}
-            {tabOf('inspire') === 'ideas' && <IdeasPage onUseTopic={handleUseTopic} />}
-            {tabOf('inspire') === 'breakdown' && <BreakdownPage persona={selectedPersona} />}
+            {tabOf('inspire') === 'trends' && <TrendsView onUseTopic={handleUseTopic} />}
+            {tabOf('inspire') === 'ideas' && <IdeasView onUseTopic={handleUseTopic} />}
+            {tabOf('inspire') === 'breakdown' && <BreakdownView persona={selectedPersona} />}
             {tabOf('inspire') === 'bench' && (
               <ComingSoon
                 title="对标账号" desc="关注几个同领域的优秀账号，他们发了新作品，搭子会第一时间告诉你，还能一键拆解。"
