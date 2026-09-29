@@ -15,8 +15,11 @@ use tokio::io::AsyncWriteExt;
 
 use crate::paths::PLATFORM;
 
-const DEFAULT_DIST_BASE: &str =
-    "https://github.com/sugeflow/zimeidazi/releases/download/runtime-r1";
+/// 运行时包版本由 build.rs 从 runtime/versions.json 编译进来；每个版本的包发布后不再修改
+const DEFAULT_DIST_BASE: &str = concat!(
+    "https://github.com/sugeflow/zimeidazi/releases/download/runtime-r",
+    env!("ZMDZ_RUNTIME_VERSION")
+);
 
 #[derive(Debug, Deserialize)]
 pub struct Manifest {

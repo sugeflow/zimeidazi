@@ -86,13 +86,21 @@ jobs:
           retention-days: 14
           compression-level: 0
 
-      # 过渡方案：放到 GitHub Release 供桌面壳下载（M5 改为国内 OSS）
-      - name: 发布到 runtime-r1
+      # 过渡方案：放到 GitHub Release 供桌面壳下载（M5 改为国内 OSS）。
+      # 已发布的运行时包不可变：同一个 runtime_version 只发布一次，绝不覆盖——覆盖（先删后传）
+      # 期间正在下载的用户会拿到 404。运行时有变化时，在 runtime/versions.json 里把 runtime_version 加一。
+      - name: 发布运行时包（仅首次）
         if: github.ref == 'refs/heads/main'
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create runtime-r1 --prerelease --title "运行时包 r1" \
-            --notes "桌面壳首次启动时下载的运行时包和浏览器包。由 runtime.yml 自动更新。" 2>/dev/null || true
-          gh release upload runtime-r1 build/runtime/*.tar.zst build/runtime/manifest-*.json --clobber
+          V=$(python -c "import json;print(json.load(open('runtime/versions.json'))['runtime_version'])")
+          TAG="runtime-r$V"
+          if gh release view "$TAG" --json assets -q '.assets[].name' 2>/dev/null | grep -qx "manifest-${{ matrix.platform }}.json"; then
+            echo "$TAG 的 ${{ matrix.platform }} 运行时包已经发布过，不覆盖"
+            exit 0
+          fi
+          gh release create "$TAG" --prerelease --title "运行时包 r$V" \
+            --notes "桌面壳首次启动时下载的运行时包和浏览器包。发布后不再修改。" 2>/dev/null || true
+          gh release upload "$TAG" build/runtime/*.tar.zst build/runtime/manifest-${{ matrix.platform }}.json
