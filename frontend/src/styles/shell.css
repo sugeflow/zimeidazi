@@ -480,3 +480,33 @@
 .dz-md ul, .dz-md ol { padding-left: 1.4em; }
 .dz-md strong { color: var(--dz-ink); }
 @media (max-width: 1040px) { .dz-kanban { grid-template-columns: 1fr; } }
+
+/* ---- 作品库 ---- */
+.dz-library__head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+.dz-library__head .dz-muted { margin-top: 4px; }
+.dz-search--sm { height: 34px; max-width: 220px; }
+.dz-search--sm input { font-size: var(--dz-fs-sm); }
+.dz-tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 18px; }
+.dz-tile {
+  display: flex; flex-direction: column; text-align: left; padding: 0; cursor: pointer; overflow: hidden;
+  background: var(--dz-surface); border: 1.5px solid var(--dz-line); border-radius: var(--dz-r-lg);
+  font-family: var(--dz-font); transition: transform var(--dz-t-fast), border-color var(--dz-t-fast), box-shadow var(--dz-t-fast);
+}
+.dz-tile:hover { transform: translateY(-2px); border-color: var(--dz-line-strong); box-shadow: var(--dz-shadow-soft); }
+.dz-tile:focus-visible { outline: none; box-shadow: var(--dz-focus); }
+.dz-tile__cover { position: relative; aspect-ratio: 3 / 4; background: var(--dz-surface-2); overflow: hidden; }
+.dz-tile__cover img, .dz-tile__cover video { width: 100%; height: 100%; object-fit: cover; object-position: top; display: block; }
+.dz-tile__ph { position: absolute; inset: 0; display: grid; place-items: center; color: var(--dz-ink-3); }
+.dz-tile__kind { position: absolute; left: 10px; top: 10px; }
+.dz-tile__text { display: flex; flex-direction: column; gap: 3px; padding: 12px 14px 14px; }
+.dz-tile__text b { font-size: var(--dz-fs-md); color: var(--dz-ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dz-tile__text span { font-size: var(--dz-fs-xs); color: var(--dz-ink-2); }
+.dz-tile__text small { font-size: 11.5px; color: var(--dz-ink-3); }
+
+.dz-work-detail__head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-top: 10px; }
+.dz-work-detail__head .dz-muted { margin-top: 4px; }
+.dz-work-detail__acts { display: flex; gap: 8px; }
+.dz-work-detail__grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 12px; }
+.dz-work-detail__grid .dz-work__thumb { border-radius: var(--dz-r); box-shadow: var(--dz-shadow-soft); }
+.dz-work-detail .dz-md { max-width: 720px; }
+.dz-work-detail ul.dz-card { padding: 6px; margin: 0; }

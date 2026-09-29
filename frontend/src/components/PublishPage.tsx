@@ -60,7 +60,7 @@ export default function PublishPage({ persona }: PublishPageProps) {
   // 发布相关
   const [accounts, setAccounts] = useState<AccountItem[]>([]);
   const [mediaFiles, setMediaFiles] = useState<OutputFile[]>([]);
-  const [selectedMedia, setSelectedMedia] = useState<string[]>([]);
+  const [selectedMedia, setSelectedMedia] = useState<string[]>(draft0.media ?? []);
   const [showPicker, setShowPicker] = useState(false);
   const [pub, setPub] = useState<Record<string, PubState>>({});
   const [publishing, setPublishing] = useState(false);
@@ -71,8 +71,8 @@ export default function PublishPage({ persona }: PublishPageProps) {
 
   // 草稿持久化：任何改动即写 localStorage，切页/刷新回来都在
   useEffect(() => {
-    savePublishDraft({ title, body, platforms, overrides, tags });
-  }, [title, body, platforms, overrides, tags]);
+    savePublishDraft({ title, body, platforms, overrides, tags, media: selectedMedia });
+  }, [title, body, platforms, overrides, tags, selectedMedia]);
 
   useEffect(() => () => adaptCtl.current?.abort(), []);   // 离开页面中止流
 

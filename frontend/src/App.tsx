@@ -12,7 +12,7 @@ import ChatPage from './components/ChatPage';
 import type { ChatDraft } from './components/ChatPage';
 import WorksPanel from './pages/WorksPanel';
 import AbilitiesPage from './pages/AbilitiesPage';
-import OutputsPage from './components/OutputsPage';
+import WorksLibrary from './pages/WorksLibrary';
 import AccountsPage from './components/AccountsPage';
 import ProfilePage from './components/ProfilePage';
 import CalendarPage from './components/CalendarPage';
@@ -34,6 +34,8 @@ import {
   closeTurn,
   loadActiveId,
   saveActiveId,
+  loadPublishDraft,
+  savePublishDraft,
 } from './lib/store';
 import type { ChatSession, ChatMessage, StreamState } from './lib/store';
 
@@ -729,7 +731,7 @@ export default function App() {
           <TodayPage
             data={today} persona={selectedPersona} running={running}
             onNavigate={navigate} onNewPersona={() => setShowWizard(true)}
-            onStartChat={handleStartChat} onUseTopic={handleUseTopic} onOpenSession={handleSessionSelect}
+            onStartChat={handleStartChat} onUseTopic={handleUseTopic} onOpenSession={handleSessionSelect} onOpenWork={openInWorks}
           />
         );
       case 'inspire':
@@ -799,7 +801,12 @@ export default function App() {
       case 'skills':
         return <AbilitiesPage onUse={handleUseAbility} onBack={() => setCurrentPage('create')} />;
       case 'works':
-        return <OutputsPage jumpPath={outputsJump} onJumpHandled={clearOutputsJump} />;
+        return (
+          <WorksLibrary
+            jumpPath={outputsJump} onJumpHandled={clearOutputsJump}
+            onPublish={(d) => { savePublishDraft({ ...loadPublishDraft(), ...d }); navigate('publish', 'center'); }}
+          />
+        );
       case 'publish':
         return (
           <TabbedPage

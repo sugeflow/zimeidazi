@@ -23,6 +23,7 @@ type Props = {
   onStartChat: (text: string) => void;
   onUseTopic: (title: string) => void;
   onOpenSession: (id: string) => void;
+  onOpenWork: (path: string) => void;
 };
 
 // 首页只放最常用的几个，口播脚本在 AI 创作页里
@@ -184,7 +185,7 @@ export default function TodayPage(p: Props) {
             {!p.running.length && data.recent.map((n) => {
               const cover = coverOf(n);
               return (
-                <button key={n.path} className="dz-task" onClick={() => p.onNavigate('works')}>
+                <button key={n.path} className="dz-task" onClick={() => p.onOpenWork(n.path)}>
                   {cover ? <img className="dz-task__thumb" src={cover} alt="" loading="lazy" /> : <span className="dz-task__thumb dz-task__thumb--empty" aria-hidden>📄</span>}
                   <span className="dz-task__text">
                     <b>{n.meta?.title || n.name}</b>

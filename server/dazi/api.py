@@ -61,15 +61,24 @@ def info() -> dict:
 
 class OpenReq(BaseModel):
     target: str
+    path: str = ""  # 只对 outputs 有效：作品库里的相对路径
 
 
 @router.post("/open")
 def open_folder(req: OpenReq) -> dict:
     # 只能打开固定的几个目录，不接受任意路径
-    path = _folders().get(req.target)
-    if path is None:
+    base = _folders().get(req.target)
+    if base is None:
         raise HTTPException(400, "不支持打开这个位置")
-    path.mkdir(parents=True, exist_ok=True)
+    base.mkdir(parents=True, exist_ok=True)
+    path = base
+    if req.path and req.target == "outputs":
+        path = (base / req.path).resolve()
+        # 不允许用 ../ 之类跳出作品目录
+        if not path.is_relative_to(base.resolve()) or not path.exists():
+            raise HTTPException(404, "找不到这个作品")
+        if path.is_file():
+            path = path.parent
     if sys.platform == "win32":
         os.startfile(path)  # type: ignore[attr-defined]
     else:

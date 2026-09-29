@@ -20,8 +20,8 @@ async function call<T>(url: string, init?: RequestInit): Promise<T> {
 
 export const fetchInfo = () => call<DaziInfo>('/api/dazi/info');
 
-/** 用系统的文件管理器打开固定的几个目录 */
-export const openFolder = (target: 'outputs' | 'logs' | 'data') =>
+/** 用系统的文件管理器打开固定的几个目录；path 是作品库里的相对路径（只对 outputs 有效） */
+export const openFolder = (target: 'outputs' | 'logs' | 'data', path = '') =>
   call<{ ok: boolean }>('/api/dazi/open', {
-    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ target }),
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ target, path }),
   });
