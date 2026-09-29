@@ -18,6 +18,21 @@ export interface ChatSession {
   sessionKey?: string;  // OpenClaw 的 session key，用于后端删除
   pendingTurnId?: string; // 进行中的可重连 job；浏览器重开后继续按 eventId 续流
   archived?: boolean;   // 归档：从 History 主列表移到「已归档」区
+  /** 每一轮生成的起止时间（毫秒，结束为 0 表示还在生成），用来认领这段时间里新做出来的作品 */
+  turns?: [number, number][];
+}
+
+/** 开始新的一轮 */
+export function openTurn(s: ChatSession, at = Date.now()): ChatSession {
+  return { ...s, turns: [...(s.turns ?? []), [at, 0]].slice(-50) as [number, number][] };
+}
+
+/** 结束最近一轮（如果还开着） */
+export function closeTurn(s: ChatSession, at = Date.now()): ChatSession {
+  const turns = s.turns ?? [];
+  const last = turns[turns.length - 1];
+  if (!last || last[1]) return s;
+  return { ...s, turns: [...turns.slice(0, -1), [last[0], at]] };
 }
 
 /** 进行中的流式状态（存于 App，不随页面切换/ChatPage 卸载而丢失）。 */
@@ -161,6 +176,11 @@ export function createSession(persona?: string): ChatSession {
     persona,
     created: Date.now(),
   };
+}
+
+/** 新建对话放到最前面，顺手去掉之前没用过的空对话（历史栏里不堆一串「新的创作」） */
+export function prependSession(s: ChatSession, prev: ChatSession[]): ChatSession[] {
+  return [s, ...prev.filter((x) => x.messages.length > 0 || x.pendingTurnId)];
 }
 
 type TitleIntent = 'issue' | 'create' | 'optimize' | 'publish' | 'inspect' | 'general';

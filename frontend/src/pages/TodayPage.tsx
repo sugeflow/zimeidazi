@@ -7,6 +7,8 @@ import type { OutputNode, TrendGroup } from '../lib/api';
 import type { Navigate } from '../shell/routes';
 import { Button, Card, Chip, EmptyState, Mascot, Tag } from '../ui';
 import type { Tone } from '../ui';
+import { TEMPLATES } from '../lib/templates';
+import type { Template } from '../lib/templates';
 import type { TodayData, Todo } from './useToday';
 import { weekDays, ymd } from './useToday';
 
@@ -23,13 +25,8 @@ type Props = {
   onOpenSession: (id: string) => void;
 };
 
-const TEMPLATES: { label: string; emoji: string; text: string }[] = [
-  { label: '小红书图文', emoji: '📕', text: '帮我写一篇小红书图文笔记，配 6 张卡片。主题是：' },
-  { label: '知识卡片', emoji: '🗂', text: '把下面这段内容做成一组知识卡片：\n' },
-  { label: '一键出短视频', emoji: '🎬', text: '帮我做一条 60 秒的竖屏短视频，主题是：' },
-  { label: '公众号文章', emoji: '📰', text: '帮我写一篇公众号文章并排好版，主题是：' },
-  { label: '拆解爆款', emoji: '🔍', text: '帮我拆解这条爆款，说说它为什么火、我能怎么借鉴：' },
-];
+// 首页只放最常用的几个，口播脚本在 AI 创作页里
+const QUICK = TEMPLATES.filter((t) => t.id !== 'script');
 
 const TREND_TONE: Record<string, Tone> = { douyin: 'coral', weibo: 'sun', zhihu: 'sky' };
 const WEEKDAY = ['一', '二', '三', '四', '五', '六', '日'];
@@ -49,7 +46,7 @@ function Compose({ onSubmit }: { onSubmit: (text: string) => void }) {
   const [picked, setPicked] = useState('');
   const ref = useRef<HTMLTextAreaElement>(null);
 
-  const pick = (t: (typeof TEMPLATES)[number]) => {
+  const pick = (t: Template) => {
     setPicked(t.label);
     setText(t.text);
     requestAnimationFrame(() => { const el = ref.current; if (el) { el.focus(); el.setSelectionRange(el.value.length, el.value.length); } });
@@ -67,7 +64,7 @@ function Compose({ onSubmit }: { onSubmit: (text: string) => void }) {
         aria-label="想做什么内容" placeholder="比如：帮我写一篇国庆去成都玩的小红书图文，配 6 张卡片"
       />
       <div className="dz-compose__bar">
-        {TEMPLATES.map((t) => (
+        {QUICK.map((t) => (
           <Chip key={t.label} selected={picked === t.label} onClick={() => pick(t)}>
             <span aria-hidden>{t.emoji}</span>{t.label}
           </Chip>

@@ -109,6 +109,7 @@ export const SKILL_DISPLAY_NAMES: Record<string, string> = {
   'video-editing': '自然语言剪辑',
   'video-highlights': '高光切片',
   'video-intro-outro': '片头 / 片尾',
+  'video-production': '原片包装成片',
   'video-reframe': '画幅转换',
   'video-script': '视频脚本',
   'video-strategy': '视频策略选型',

@@ -40,6 +40,15 @@
 .dz-btn--danger { background: var(--dz-danger-soft); color: var(--dz-danger); }
 .dz-btn--danger:hover:not(:disabled) { background: var(--dz-danger); color: #fff; }
 
+/* 只有图标的小按钮（关闭、收起） */
+.dz-icon-btn {
+  display: inline-grid; place-items: center; width: 32px; height: 32px; flex: none;
+  border: 0; border-radius: var(--dz-r-sm); background: transparent; color: var(--dz-ink-2); cursor: pointer;
+  transition: background var(--dz-t-fast), color var(--dz-t-fast);
+}
+.dz-icon-btn:hover { background: var(--dz-hover); color: var(--dz-ink); }
+.dz-icon-btn:focus-visible { outline: none; box-shadow: var(--dz-focus); }
+
 .dz-btn__spin {
   width: 14px; height: 14px; border-radius: 50%;
   border: 2px solid currentColor; border-right-color: transparent;

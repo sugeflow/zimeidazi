@@ -2,13 +2,16 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import Nav from './shell/Nav';
 import type { NavCounts } from './shell/Nav';
 import { DEFAULT_TAB } from './shell/routes';
+import { useMediaQuery } from './lib/useMediaQuery';
 import type { PageId, TabId } from './shell/routes';
 import TodayPage from './pages/TodayPage';
 import type { RunningTask } from './pages/TodayPage';
 import { useToday } from './pages/useToday';
 import { ComingSoon, CreateFrame, TabbedPage } from './pages/frames';
 import ChatPage from './components/ChatPage';
-import SkillPage from './components/SkillPage';
+import type { ChatDraft } from './components/ChatPage';
+import WorksPanel from './pages/WorksPanel';
+import AbilitiesPage from './pages/AbilitiesPage';
 import OutputsPage from './components/OutputsPage';
 import AccountsPage from './components/AccountsPage';
 import ProfilePage from './components/ProfilePage';
@@ -28,6 +31,9 @@ import {
   saveSessions,
   createSession,
   updateSessionTitle,
+  openTurn,
+  prependSession,
+  closeTurn,
   loadActiveId,
   saveActiveId,
 } from './lib/store';
@@ -241,7 +247,7 @@ export default function App() {
     setSessions((prev) => {
       const next = prev.map((s) =>
         s.id === sessionId
-          ? { ...s, messages: [...s.messages, msg], sessionKey: sessionKey || s.sessionKey, pendingTurnId: undefined }
+          ? closeTurn({ ...s, messages: [...s.messages, msg], sessionKey: sessionKey || s.sessionKey, pendingTurnId: undefined })
           : s);
       saveSessions(next);
       return next;
@@ -270,7 +276,7 @@ export default function App() {
     const turnId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
     try { sessionStorage.setItem(`easel_pending_turn:${sessionId}`, turnId); } catch { /* ignore */ }
     setSessions((prev) => {
-      const next = prev.map((s) => (s.id === sessionId ? { ...s, pendingTurnId: turnId } : s));
+      const next = prev.map((s) => (s.id === sessionId ? openTurn(closeTurn({ ...s, pendingTurnId: turnId })) : s));
       saveSessions(next); return next;
     });
     streamAcc.current[sessionId] = { content: '', thinking: '', steps: [], questions: [] };
@@ -514,9 +520,30 @@ export default function App() {
     startStream(sessionId, agentMessage, persona, attachments);
   }, [selectedPersona, startStream]);
 
-  const handleSendMessage = useCallback((sessionId: string, displayText: string, attachments?: UploadedFile[]) => {
-    sendUserAndStream(sessionId, displayText, attachments);
+  // 新建对话时预先填进输入框的内容（从「全部能力」点进来），发出第一句后就不再需要
+  const [drafts, setDrafts] = useState<Record<string, ChatDraft>>({});
+
+  const handleSendMessage = useCallback((sessionId: string, displayText: string, attachments?: UploadedFile[], agentText?: string) => {
+    setDrafts((d) => { if (!d[sessionId]) return d; const n = { ...d }; delete n[sessionId]; return n; });
+    sendUserAndStream(sessionId, displayText, attachments, agentText);
   }, [sendUserAndStream]);
+
+  // 右侧作品栏，展开 / 收起记在本机。窗口窄的时候作品栏会盖住对话，所以默认收起、单独记
+  const narrow = useMediaQuery('(max-width: 1200px)');
+  const [wideOpen, setWideOpen] = useState(() => {
+    try { return localStorage.getItem('dz_works_open') !== '0'; } catch { return true; }
+  });
+  const [narrowOpen, setNarrowOpen] = useState(false);
+  const worksOpen = narrow ? narrowOpen : wideOpen;
+  const toggleWorks = useCallback((open: boolean) => {
+    if (narrow) { setNarrowOpen(open); return; }
+    setWideOpen(open);
+    try { localStorage.setItem('dz_works_open', open ? '1' : '0'); } catch { /* ignore */ }
+  }, [narrow]);
+  const openInWorks = useCallback((path: string) => {
+    setOutputsJump(path);
+    setCurrentPage('works');
+  }, []);
 
   // 重试/编辑重发：从该用户消息处截断（丢弃它及其之后），用 text 重新发起。
   const handleResend = useCallback((
@@ -533,7 +560,7 @@ export default function App() {
   const handleUseTopic = useCallback((title: string) => {
     const prompt = `围绕当前热点「${title}」：先判断它适不适合我的账号赛道；若合适，给 2-3 个差异化的二创角度，并把你最推荐的那条写成可直接发布的文案初稿。`;
     const ns = createSession(selectedPersona || undefined);
-    setSessions((prev) => { const u = [ns, ...prev]; saveSessions(u); return u; });
+    setSessions((prev) => { const u = prependSession(ns, prev); saveSessions(u); return u; });
     setActiveSessionId(ns.id);
     setCurrentPage('create');
     sendUserAndStream(ns.id, prompt);
@@ -556,7 +583,7 @@ export default function App() {
     clearStream(sessionId);
     // 关键：清掉「本轮进行中」标记，否则下一句被判为「上一条还没跑完」拦下
     setSessions((prev) => {
-      const next = prev.map((s) => (s.id === sessionId ? { ...s, pendingTurnId: undefined } : s));
+      const next = prev.map((s) => (s.id === sessionId ? closeTurn({ ...s, pendingTurnId: undefined }) : s));
       saveSessions(next);
       return next;
     });
@@ -576,7 +603,7 @@ export default function App() {
   const handleNewChat = useCallback(() => {
     const newSession = createSession(selectedPersona || undefined);
     setSessions((prev) => {
-      const updated = [newSession, ...prev];
+      const updated = prependSession(newSession, prev);
       saveSessions(updated);
       return updated;
     });
@@ -651,7 +678,7 @@ export default function App() {
       // 用新画像开一个新会话
       const newSession = createSession(name);
       setSessions((prev) => {
-        const updated = [newSession, ...prev];
+        const updated = prependSession(newSession, prev);
         saveSessions(updated);
         return updated;
       });
@@ -680,11 +707,20 @@ export default function App() {
   // 从「今天」页的大输入框开始：新开一个创作，发出去，跳到 AI 创作页
   const handleStartChat = useCallback((text: string) => {
     const ns = createSession(selectedPersona || undefined);
-    setSessions((prev) => { const u = [ns, ...prev]; saveSessions(u); return u; });
+    setSessions((prev) => { const u = prependSession(ns, prev); saveSessions(u); return u; });
     setActiveSessionId(ns.id);
     setCurrentPage('create');
     sendUserAndStream(ns.id, text);
   }, [selectedPersona, sendUserAndStream]);
+
+  // 「全部能力」里点一项：开一个新对话，输入框里先写好开头，等用户补上要做什么
+  const handleUseAbility = useCallback((skill: string, label: string) => {
+    const ns = createSession(selectedPersona || undefined);
+    setSessions((prev) => { const u = prependSession(ns, prev); saveSessions(u); return u; });
+    setDrafts((d) => ({ ...d, [ns.id]: { text: `用「${label}」帮我做：`, skill } }));
+    setActiveSessionId(ns.id);
+    setCurrentPage('create');
+  }, [selectedPersona]);
 
   const tabOf = (page: PageId) => tabs[page] ?? DEFAULT_TAB[page]!;
   const setTab = (page: PageId) => (t: TabId) => setTabs((x) => ({ ...x, [page]: t }));
@@ -722,13 +758,22 @@ export default function App() {
             sessions={sessions} activeId={activeSessionId} streamingIds={streamingIds}
             onSelect={handleSessionSelect} onNew={handleNewChat} onDelete={handleSessionDelete} onRename={handleSessionRename}
             onAllSkills={() => setCurrentPage('skills')}
+            worksOpen={worksOpen} onOpenWorks={() => toggleWorks(true)}
+            works={activeSession && (activeSession.messages.length > 0 || streams[activeSession.id]) && (
+              <WorksPanel
+                key={activeSession.id} session={activeSession} stream={streams[activeSession.id]}
+                onCollapse={() => toggleWorks(false)} onOpenInWorks={openInWorks}
+              />
+            )}
           >
             {activeSession ? (
           <ChatPage
             key={activeSession.id}
             session={activeSession}
             stream={streams[activeSession.id]}
-            onSend={(displayText, attachments) => handleSendMessage(activeSession.id, displayText, attachments)}
+            draft={drafts[activeSession.id]}
+            onAllSkills={() => setCurrentPage('skills')}
+            onSend={(displayText, attachments, agentText) => handleSendMessage(activeSession.id, displayText, attachments, agentText)}
             onStop={() => handleStopStream(activeSession.id)}
             onResend={(userIndex, displayText, attachments, legacyAgentText) => handleResend(
               activeSession.id, userIndex, displayText, attachments, legacyAgentText,
@@ -755,7 +800,7 @@ export default function App() {
           </CreateFrame>
         );
       case 'skills':
-        return <SkillPage persona={selectedPersona} />;
+        return <AbilitiesPage onUse={handleUseAbility} onBack={() => setCurrentPage('create')} />;
       case 'works':
         return <OutputsPage jumpPath={outputsJump} onJumpHandled={clearOutputsJump} />;
       case 'publish':
@@ -822,7 +867,7 @@ export default function App() {
     } else {
       // 无活跃会话（极少）才新建
       const ns = createSession(persona || undefined);
-      setSessions((prev) => { const u = [ns, ...prev]; saveSessions(u); return u; });
+      setSessions((prev) => { const u = prependSession(ns, prev); saveSessions(u); return u; });
       setActiveSessionId(ns.id);
     }
   }, [activeSessionId]);

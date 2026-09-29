@@ -49,7 +49,7 @@ function toJumpUrl(outputsPath: string): string {
 }
 
 /** 单个 outputs 路径 token → markdown 链接 / 内联图。
- *  面向用户的文案用产品词汇：目录是「内容库 › 相对位置」，文件只显示文件名，
+ *  面向用户的文案用产品词汇：目录是「作品库 › 相对位置」，文件只显示文件名，
  *  `outputs/` 这类后端存储术语不再出现在界面上。 */
 function renderPath(token: string): string {
   const t = token.replace(/\\/g, '/').replace(TRAILING, '');
@@ -60,7 +60,7 @@ function renderPath(token: string): string {
     if (isDir) {
       const rel = t.replace(/^outputs\//, '').replace(/\/+$/, '');
       if (!rel) return token;
-      return `[内容库 › ${rel}](${toJumpUrl(t)})`;
+      return `[作品库 › ${rel}](${toJumpUrl(t)})`;
     }
     const name = t.slice(t.lastIndexOf('/') + 1);
     if (IMG_RE.test(t)) return `![${name}](${toMediaUrl(t)})`;

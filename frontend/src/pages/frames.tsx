@@ -4,7 +4,7 @@ import type { KeyboardEvent, ReactNode } from 'react';
 import type { ChatSession } from '../lib/store';
 import type { TabId } from '../shell/routes';
 import { Button, Mascot, Segmented } from '../ui';
-import { IconNewChat, IconSkills, IconTrash } from '../components/icons';
+import { IconNewChat, IconPanel, IconSkills, IconTrash } from '../components/icons';
 
 export function TabbedPage({ title, desc, tab, tabs, onTab, children }: {
   title: string; desc?: string; tab: TabId;
@@ -47,7 +47,7 @@ function when(ts: number) {
   return `${d.getMonth() + 1}月${d.getDate()}日`;
 }
 
-/** AI 创作页：左侧对话历史 + 右侧对话。U3 会重做成"对话 + 作品预览" */
+/** 历史栏里的一条：双击改名，删除要再点一次确认 */
 function HistoryItem({ s, active, live, onSelect, onDelete, onRename }: {
   s: ChatSession; active: boolean; live: boolean;
   onSelect: () => void; onDelete: () => void; onRename: (t: string) => void;
@@ -93,14 +93,18 @@ function HistoryItem({ s, active, live, onSelect, onDelete, onRename }: {
   );
 }
 
-export function CreateFrame({ sessions, activeId, streamingIds, onSelect, onNew, onDelete, onRename, onAllSkills, children }: {
+/** AI 创作页：历史栏 + 对话 + 右侧作品栏（可收起） */
+export function CreateFrame({ sessions, activeId, streamingIds, onSelect, onNew, onDelete, onRename, onAllSkills, works, worksOpen, onOpenWorks, children }: {
   sessions: ChatSession[]; activeId: string | null; streamingIds: string[];
   onSelect: (id: string) => void; onNew: () => void; onDelete: (id: string) => void;
-  onRename: (id: string, title: string) => void; onAllSkills: () => void; children: ReactNode;
+  onRename: (id: string, title: string) => void; onAllSkills: () => void;
+  /** 新对话还没开始时为空，不显示作品栏 */
+  works: ReactNode; worksOpen: boolean; onOpenWorks: () => void; children: ReactNode;
 }) {
   const list = sessions.filter((s) => !s.archived);
+  const showWorks = Boolean(works) && worksOpen;
   return (
-    <div className="dz-create">
+    <div className={`dz-create${showWorks ? ' has-works' : ''}`}>
       <aside className="dz-history" aria-label="对话历史">
         <Button variant="primary" block icon={<IconNewChat size={16} />} onClick={onNew}>新的创作</Button>
         <div className="dz-history__label">历史</div>
@@ -112,7 +116,15 @@ export function CreateFrame({ sessions, activeId, streamingIds, onSelect, onNew,
         </div>
         <Button variant="ghost" block icon={<IconSkills size={16} />} onClick={onAllSkills}>全部能力</Button>
       </aside>
-      <div className="dz-create__main">{children}</div>
+      <div className="dz-create__main">
+        {children}
+        {Boolean(works) && !worksOpen && (
+          <button className="dz-works-tab" onClick={onOpenWorks} title="展开作品栏">
+            <IconPanel size={16} /><span>这次的作品</span>
+          </button>
+        )}
+      </div>
+      {showWorks && works}
     </div>
   );
 }

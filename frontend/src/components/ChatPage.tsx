@@ -6,14 +6,20 @@ import type { ChatSession, ChatMessage, StreamState } from '../lib/store';
 import { uploadFiles, adoptOversize } from '../lib/api';
 import type { UploadedFile } from '../lib/api';
 import { IconArrowUp, IconStop, IconPlus, IconFile } from './icons';
-import logo from '../assets/brand/logo.png';
 import { greeting as dayGreeting } from '../lib/format';
+import { TEMPLATES } from '../lib/templates';
 import { alertDialog } from '../ui/dialog';
+import { Button, Mascot } from '../ui';
+
+/** 打开对话时预先填好的输入；skill 是从「全部能力」点进来时要用的技能 ID */
+export interface ChatDraft { text: string; skill?: string }
 
 interface ChatPageProps {
   session: ChatSession;
   stream?: StreamState;          // 进行中的流式态（来自 App，切页也不丢）
-  onSend: (displayText: string, attachments?: UploadedFile[]) => void;
+  draft?: ChatDraft;
+  onAllSkills: () => void;
+  onSend: (displayText: string, attachments?: UploadedFile[], agentText?: string) => void;
   onStop: () => void;
   onResend: (
     userIndex: number,
@@ -24,22 +30,15 @@ interface ChatPageProps {
   onQuestionAnswered?: (questionId: string) => void;   // 某道问答题提交成功（App 记录答过，重放不再出现）
 }
 
-// 空态推荐（贴合社媒创作场景）
-const SUGGESTIONS = [
-  { icon: '🔥', title: '蹭个热点', prompt: '看看现在微博和抖音有什么热搜，挑几个适合我做二创的选题' },
-  { icon: '✍️', title: '写小红书文案', prompt: '帮我写一条小红书种草文案，主题先问我' },
-  { icon: '🎴', title: '做金句卡片', prompt: '把一句走心的话做成一张适合发朋友圈的金句卡片' },
-  { icon: '🎬', title: '口播脚本', prompt: '帮我写一条 60 秒的口播短视频脚本，主题先问我' },
-];
-
 function greeting(): string {
   const h = new Date().getHours();
   const g = dayGreeting(h);
-  return `${g}，想创作点什么？`;
+  return `${g}，今天做点什么？`;
 }
 
-export default function ChatPage({ session, stream, onSend, onStop, onResend, onQuestionAnswered }: ChatPageProps) {
-  const [input, setInput] = useState('');
+export default function ChatPage({ session, stream, draft, onAllSkills, onSend, onStop, onResend, onQuestionAnswered }: ChatPageProps) {
+  const [input, setInput] = useState(draft?.text ?? '');
+  const skillRef = useRef(draft?.skill);
   const [attachments, setAttachments] = useState<UploadedFile[]>([]);
   const [uploading, setUploading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
@@ -99,6 +98,12 @@ export default function ChatPage({ session, stream, onSend, onStop, onResend, on
     if (!isEmpty) messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [session.messages, stream?.content, stream?.thinking, stream?.activity, stream?.stillWorking, isEmpty]);
 
+  // 带着预填内容打开：光标放到最后，接着写就行
+  useEffect(() => {
+    const el = textareaRef.current;
+    if (draft?.text && el) { el.focus(); el.setSelectionRange(el.value.length, el.value.length); }
+  }, [draft?.text]);
+
   useEffect(() => {
     const el = textareaRef.current;
     if (el) {
@@ -111,13 +116,17 @@ export default function ChatPage({ session, stream, onSend, onStop, onResend, on
     const trimmed = input.trim();
     if ((!trimmed && attachments.length === 0) || isStreaming || uploading) return;
     // 附件通过结构化字段发送；用户消息气泡只显示用户实际输入的文字。
-    onSend(trimmed, attachments);
+    // 从「全部能力」点进来的第一句，额外告诉搭子用哪个技能（界面上不显示）
+    const skill = skillRef.current;
+    skillRef.current = undefined;
+    onSend(trimmed, attachments, skill && trimmed ? `${trimmed}\n\n（请使用 ${skill} 技能完成）` : undefined);
     setInput('');
     setAttachments([]);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    // 中文输入法选词时按回车不能发送
+    if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
       e.preventDefault();
       handleSend();
     }
@@ -143,7 +152,7 @@ export default function ChatPage({ session, stream, onSend, onStop, onResend, on
         <textarea
           ref={textareaRef}
           className="chat-input"
-          placeholder={dragOver ? '松手上传素材…' : hero ? '把你的想法告诉我，选题 / 文案 / 卡片 / 视频 / 发布都行…（可拖入图片/文档当素材）' : '发消息…（Enter 发送，Shift+Enter 换行，可拖入/粘贴素材）'}
+          placeholder={dragOver ? '松手上传素材…' : hero ? '比如：帮我写一篇国庆去成都玩的小红书图文，配 6 张卡片' : '发消息…（Enter 发送，Shift+Enter 换行，可拖入/粘贴素材）'}
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
@@ -169,30 +178,43 @@ export default function ChatPage({ session, stream, onSend, onStop, onResend, on
     </div>
   );
 
-  // ---- 空态：居中欢迎页 ----
+  // 模板只填进输入框，用户接着写主题再发送
+  const fill = (text: string) => {
+    setInput(text);
+    requestAnimationFrame(() => {
+      const el = textareaRef.current;
+      if (el) { el.focus(); el.setSelectionRange(el.value.length, el.value.length); }
+    });
+  };
+
+  // ---- 空态：模板 ----
   if (isEmpty) {
     return (
       <div className="chat-page">
-        <div className="chat-hero">
-          <div className="chat-hero-brand">
-            <img src={logo} alt="" />
-            <span>自媒搭子</span>
+        <div className="dz-create-empty">
+          <div className="dz-create-empty__hi">
+            <Mascot pose="welcome" size={72} />
+            <div>
+              <h1 className="dz-h1">{greeting()}</h1>
+              <p className="dz-sub">说说想做什么，或者从下面挑一个模板开始。{session.persona ? `会按「${session.persona}」的定位来写。` : ''}</p>
+            </div>
           </div>
-          <h1 className="chat-hero-title">{greeting()}</h1>
-          <p className="chat-hero-sub">从选题到发布，一站式帮你把想法做成能发的内容。</p>
           {inputBox(true)}
-          <div className="suggestions">
-            {SUGGESTIONS.map((s) => (
-              <button key={s.title} className="card card-hover suggestion-card"
-                onClick={() => { if (!isStreaming) onSend(s.prompt); }}>
-                <span className="suggestion-icon">{s.icon}</span>
-                <span className="suggestion-body">
-                  <span className="suggestion-title">{s.title}</span>
-                  <span className="suggestion-text">{s.prompt}</span>
-                </span>
-              </button>
-            ))}
-          </div>
+          <section>
+            <div className="dz-sec-head">
+              <h2 className="dz-h2">从模板开始</h2>
+              <Button variant="link" onClick={onAllSkills}>看看搭子的全部能力 →</Button>
+            </div>
+            <div className="dz-tpl-grid">
+              {TEMPLATES.map((t) => (
+                <button key={t.id} className="dz-tpl" onClick={() => fill(t.text)}>
+                  <span className="dz-tpl__emoji" aria-hidden>{t.emoji}</span>
+                  <b>{t.label}</b>
+                  <span>{t.desc}</span>
+                </button>
+              ))}
+            </div>
+          </section>
         </div>
       </div>
     );
