@@ -11,6 +11,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import os
 import shutil
 import subprocess
@@ -89,8 +90,16 @@ def main() -> None:
     rev = subprocess.run(["git", "rev-parse", "--short", "HEAD"], cwd=UPSTREAM,
                          capture_output=True, text=True).stdout.strip()
     (out / ".upstream-rev").write_text(rev + "\n", encoding="utf-8")
+    # 内容指纹：分发的代码只要有任何变化就会变。桌面壳据此判断是否要把新代码同步到用户数据目录
+    # （只看版本号和上游 commit 不够：只改我们自己的前端或补丁时，这两个都不变）
+    h = hashlib.sha256()
+    for f in sorted(p for p in out.rglob("*") if p.is_file() and p.name != ".build-id"):
+        h.update(f.relative_to(out).as_posix().encode())
+        h.update(f.read_bytes())
+    build_id = h.hexdigest()[:16]
+    (out / ".build-id").write_text(build_id + "\n", encoding="utf-8")
     size = sum(f.stat().st_size for f in out.rglob("*") if f.is_file())
-    log(f"完成：上游 {rev}，共 {size / 1e6:.0f} MB")
+    log(f"完成：上游 {rev}，内容指纹 {build_id}，共 {size / 1e6:.0f} MB")
 
 
 if __name__ == "__main__":

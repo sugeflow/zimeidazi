@@ -63,8 +63,9 @@ pub async fn prepare(paths: &Paths, resources: &Path, emit: Emit<'_>) -> Result<
 
     // 2. 应用代码：安装目录 → 数据目录（保留 .env、profiles、outputs 等用户数据）
     let bundled = resources.join("easel");
-    let rev = std::fs::read_to_string(bundled.join(".upstream-rev")).unwrap_or_default();
-    let app_id = format!("{}+{}", env!("CARGO_PKG_VERSION"), rev.trim());
+    // .build-id 是分发代码的内容指纹（scripts/stage_easel.py 生成），代码有任何变化都会变
+    let build_id = std::fs::read_to_string(bundled.join(".build-id")).unwrap_or_default();
+    let app_id = format!("{}+{}", env!("CARGO_PKG_VERSION"), build_id.trim());
     if state.app_synced.as_deref() != Some(&app_id) || !paths.app.join("web").join("app.py").exists() {
         emit(Progress { step: "app", label: "更新创作技能".into(), percent: None, detail: app_id.clone() });
         let (src, dst) = (bundled.clone(), paths.app.clone());
