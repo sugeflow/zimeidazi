@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><title>方向 A · 暖橙手帐</title>
+<style>
+:root{--bg:#FBF5EC;--paper:#FFFDF9;--ink:#2B211C;--sub:#8A7B6F;--line:#EFE4D6;--coral:#EF5A3A;--coral-soft:#FDE6DD;--sun:#F6B53B;--sun-soft:#FDF0D3;--mint:#DDF1E6;--mint-ink:#2F7A55}
+*{box-sizing:border-box}body{margin:0;width:1280px;height:820px;overflow:hidden;background:var(--bg);color:var(--ink);font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;display:flex}
+aside{width:228px;padding:20px 14px;display:flex;flex-direction:column;gap:4px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:19px;letter-spacing:1px;padding:0 8px 16px}
+.brand img{width:34px;height:34px}
+.who{margin:0 4px 16px;padding:10px 12px;background:var(--paper);border-radius:14px;border:1.5px solid var(--line);font-size:12px;color:var(--sub)}
+.who b{display:block;color:var(--ink);font-size:14px;margin-top:2px}
+nav a{display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:12px;font-size:15px;color:var(--ink);text-decoration:none}
+nav a.on{background:var(--coral);color:#fff;font-weight:700;box-shadow:0 4px 0 #C9432A}
+nav a i{width:20px;text-align:center;font-style:normal}
+.vip{margin-top:auto;background:var(--sun-soft);border-radius:16px;padding:14px;font-size:12px;color:#7A5A12}
+.vip b{font-size:14px;color:var(--ink);display:block;margin-bottom:8px}
+.meter{height:6px;background:#F3DDA8;border-radius:9px;overflow:hidden;margin:6px 0}.meter span{display:block;height:100%;width:68%;background:var(--sun)}
+main{flex:1;padding:30px 40px 0 28px;overflow:hidden}
+.hello{display:flex;align-items:flex-end;gap:16px}
+.hello h1{margin:0;font-size:32px;font-weight:800;position:relative}
+.hello h1 svg{position:absolute;left:0;bottom:-10px}
+.hello p{margin:0 0 4px;color:var(--sub)}
+.ask{margin-top:26px;background:var(--paper);border:2px solid var(--ink);border-radius:20px;padding:18px 18px 14px;box-shadow:5px 5px 0 var(--ink)}
+.ask .ph{font-size:17px;color:#A89A8D}
+.ask .row{display:flex;gap:8px;margin-top:16px;align-items:center}
+.chip{font-size:13px;padding:7px 13px;border-radius:99px;background:var(--bg);border:1.5px solid var(--line)}
+.go{margin-left:auto;background:var(--coral);color:#fff;font-weight:700;border-radius:12px;padding:10px 20px;font-size:14px}
+h2{font-size:17px;margin:30px 0 14px;display:flex;align-items:center;gap:8px}
+h2 small{font-weight:400;color:var(--sub);font-size:13px}
+.ideas{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.idea{background:var(--paper);border-radius:18px;padding:16px 18px;border:1.5px solid var(--line);position:relative}
+.tag{display:inline-block;font-size:11px;font-weight:700;padding:3px 9px;border-radius:7px;transform:rotate(-2deg)}
+.t1{background:var(--coral-soft);color:#B63E22}.t2{background:var(--mint);color:var(--mint-ink)}.t3{background:var(--sun-soft);color:#8A6210}
+.idea h3{font-size:16px;line-height:1.45;margin:10px 0 8px}
+.idea p{font-size:12.5px;color:var(--sub);margin:0 0 14px;line-height:1.6}
+.idea .act{font-size:13px;font-weight:700;color:var(--coral)}
+.low{display:grid;grid-template-columns:1.35fr 1fr;gap:16px}
+.box{background:var(--paper);border-radius:18px;border:1.5px solid var(--line);padding:14px 16px}
+.task{display:flex;gap:12px;align-items:center;padding:8px 0}
+.task img{width:42px;height:56px;border-radius:8px;object-fit:cover}
+.task b{font-size:14px;display:block}.task span{font-size:12px;color:var(--sub)}
+.pill{margin-left:auto;font-size:12px;padding:5px 10px;border-radius:9px;background:var(--coral-soft);color:#B63E22;font-weight:700;white-space:nowrap}
+.pill.wait{background:var(--sun-soft);color:#8A6210}
+.week{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;text-align:center;font-size:12px;color:var(--sub)}
+.day{border-radius:12px;padding:8px 0 10px;background:var(--bg)}.day b{display:block;font-size:16px;color:var(--ink);margin-bottom:6px}
+.day.today{background:var(--ink);color:#fff}.day.today b{color:#fff}
+.dot{display:inline-block;width:7px;height:7px;border-radius:9px;margin:0 1px}
+.buddy{position:absolute;right:40px;top:22px;width:120px;opacity:.95}
+</style></head><body>
+<aside>
+  <div class="brand"><img src="img/logo.png">自媒搭子</div>
+  <div class="who">正在为这个账号创作<b>小林的生活记录 ▾</b></div>
+  <nav>
+    <a class="on"><i>⌂</i>首页</a><a><i>✦</i>找灵感</a><a><i>✎</i>创作</a><a><i>▦</i>我的作品</a><a><i>➚</i>发布</a><a><i>☺</i>我的定位</a>
+  </nav>
+  <div class="vip"><b>月度会员</b>本月额度已用 68%<div class="meter"><span></span></div>还有 23 天到期 · 续费</div>
+</aside>
+<main>
+
+  <div class="hello"><h1>下午好，小林<svg width="150" height="12" viewBox="0 0 150 12"><path d="M2 8 C 30 2, 60 12, 90 6 S 140 4, 148 7" stroke="#EF5A3A" stroke-width="4" fill="none" stroke-linecap="round"/></svg></h1></div>
+  <p style="color:var(--sub);margin:18px 0 0">今天想做点什么？跟搭子说一句话就行。</p>
+  <div class="ask"><div class="ph">比如：帮我写一篇国庆去成都玩的小红书图文，配 6 张卡片</div>
+    <div class="row"><span class="chip">📕 小红书图文</span><span class="chip">🗂 知识卡片</span><span class="chip">🎬 一键出短视频</span><span class="chip">📰 公众号文章</span><span class="go">开始 →</span></div></div>
+  <h2>搭子今天帮你挑的选题 <small>结合热点和你的「生活方式」定位</small></h2>
+  <div class="ideas">
+    <div class="idea"><span class="tag t1">抖音热榜 · 12.4 万</span><h3>国庆不想人挤人？5 个「反向旅游」小众去处</h3><p>节前两天搜索量暴涨，适合做 6 页攻略卡片</p><span class="act">帮我做成图文 →</span></div>
+    <div class="idea"><span class="tag t2">小红书趋势 · 上升中</span><h3>15 分钟生活圈：我家楼下的宝藏小店</h3><p>和你近 3 篇高赞笔记风格一致，素材门槛低</p><span class="act">帮我做成图文 →</span></div>
+    <div class="idea"><span class="tag t3">微博热搜 · 3.2 万讨论</span><h3>秋天第一杯奶茶又来了？聊聊仪式感消费</h3><p>讨论度高，适合 30 秒口播短视频</p><span class="act">帮我写脚本 →</span></div>
+  </div>
+  <div class="low">
+    <div><h2>进行中</h2><div class="box">
+      <div class="task"><img src="img/w1.jpg"><div><b>成都周末去哪儿 · 小红书图文</b><span>正在生成第 3 / 6 张卡片</span></div><span class="pill">生成中</span></div>
+      <div class="task"><img src="img/w4.jpg"><div><b>早八 5 分钟快手早餐 · 短视频</b><span>脚本写好了，等你看一眼</span></div><span class="pill wait">待确认</span></div>
+    </div></div>
+    <div><h2>这周的发布</h2><div class="box"><div class="week">
+      <div class="day">一<b>28</b></div><div class="day today">二<b>29</b><span class="dot" style="background:#EF5A3A"></span></div><div class="day">三<b>30</b><span class="dot" style="background:#EF5A3A"></span><span class="dot" style="background:#111"></span></div><div class="day">四<b>1</b></div><div class="day">五<b>2</b><span class="dot" style="background:#111"></span></div><div class="day">六<b>3</b></div><div class="day">日<b>4</b></div></div></div>
+  </div>
+</main></body></html>
