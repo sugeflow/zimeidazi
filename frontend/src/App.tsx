@@ -20,6 +20,8 @@ import PublishPage from './components/PublishPage';
 import { Welcome, Wizard } from './pages/Onboarding';
 import SettingsPage from './pages/SettingsPage';
 import { BreakdownView, IdeasView, TrendsView } from './pages/InspirePages';
+import EngagePage from './pages/EngagePage';
+import DataPage from './pages/DataPage';
 import { fetchStatus, fetchPersonas, streamChat, fetchLastTurn, stopChat } from './lib/api';
 import type { PersonaItem, UploadedFile, ChatQuestion } from './lib/api';
 import { questionStatus } from './lib/api';
@@ -701,7 +703,7 @@ export default function App() {
     const s = sessions.find((x) => x.id === id);
     return { sessionId: id, title: s?.title || '新的创作', activity: streams[id]?.activity || '' };
   });
-  const counts: NavCounts = { today: today.todos.length };
+  const counts: NavCounts = { today: today.todos.length, engage: today.comments };
 
   // 从「今天」页的大输入框开始：新开一个创作，发出去，跳到 AI 创作页
   const handleStartChat = useCallback((text: string) => {
@@ -825,20 +827,23 @@ export default function App() {
         );
       case 'engage':
         return (
-          <ComingSoon
-            title="互动" desc="你作品下的新评论和私信，会汇总到这里。搭子按你的账号定位起草回复，你看过点确认才会发出去。"
-            points={['小红书、抖音、快手的新评论提醒', 'AI 起草回复，你确认后才发送', '私信汇总，不错过合作咨询']}
-            action={{ label: '先去登录平台账号', onClick: () => navigate('accounts', 'platforms') }}
-          />
+          <TabbedPage
+            title="互动" desc="你作品下的新评论，搭子起草回复，你看过才发" tab={tabOf('engage')} onTab={setTab('engage')}
+            tabs={[{ value: 'comments', label: '评论' }, { value: 'dm', label: '私信' }]}
+          >
+            {tabOf('engage') === 'comments' && (
+              <EngagePage persona={selectedPersona} onLogin={() => navigate('accounts', 'platforms')} onChange={today.reload} />
+            )}
+            {tabOf('engage') === 'dm' && (
+              <ComingSoon
+                title="私信" desc="各平台的私信会汇总到这里，有合作咨询不会错过。"
+                points={['私信汇总，新消息提醒', '回复时直接打开对应平台']}
+              />
+            )}
+          </TabbedPage>
         );
       case 'data':
-        return (
-          <ComingSoon
-            title="数据" desc="粉丝和每篇作品的表现，搭子帮你看懂数据，告诉你下一篇该怎么做。"
-            points={['粉丝、点赞、收藏的变化趋势', '哪篇作品表现最好、为什么', '每周复盘建议']}
-            action={{ label: '先去登录平台账号', onClick: () => navigate('accounts', 'platforms') }}
-          />
-        );
+        return <DataPage onLogin={() => navigate('accounts', 'platforms')} onReview={handleStartChat} />;
       case 'accounts':
         return (
           <TabbedPage

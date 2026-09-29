@@ -84,3 +84,95 @@ def open_folder(req: OpenReq) -> dict:
     else:
         subprocess.Popen(["open" if sys.platform == "darwin" else "xdg-open", str(path)])
     return {"ok": True}
+
+
+# ---------------------------------------------------------------- 运营：互动、数据
+
+from .ops import data as ops_data, db as ops_db, engage, jobs as ops_jobs, llm, scheduler  # noqa: E402
+from .ops.jobs import JobError  # noqa: E402
+
+scheduler.start()
+
+
+@router.get("/engage/summary")
+def engage_summary() -> dict:
+    return {**engage.summary(), "autoSync": scheduler.enabled()}
+
+
+@router.get("/engage/comments")
+def engage_comments(status: str = "pending") -> list[dict]:
+    return engage.listing(status)
+
+
+@router.post("/engage/sync")
+def engage_sync() -> dict:
+    return ops_jobs.start("sync", engage.PLATFORM, engage.sync)
+
+
+class DraftReq(BaseModel):
+    ids: list[str]
+    persona: str = ""
+
+
+@router.post("/engage/draft")
+def engage_draft(req: DraftReq) -> dict:
+    if not req.ids:
+        return {"drafts": {}}
+    try:
+        return {"drafts": engage.draft(req.ids[:40], req.persona)}
+    except llm.LLMError as e:
+        raise HTTPException(502, str(e))
+
+
+class CommentPatch(BaseModel):
+    draft: str | None = None
+    status: str | None = None
+
+
+@router.put("/engage/comments/{cid}")
+def engage_update(cid: str, req: CommentPatch) -> dict:
+    engage.update(cid, req.draft, req.status)
+    return {"ok": True}
+
+
+class SendReq(BaseModel):
+    ids: list[str]
+
+
+@router.post("/engage/send")
+def engage_send(req: SendReq) -> dict:
+    try:
+        engage.check_send(req.ids)
+    except JobError as e:
+        raise HTTPException(429, str(e))
+    return ops_jobs.start("send", engage.PLATFORM, lambda job: engage.send(job, req.ids))
+
+
+class AutoReq(BaseModel):
+    enabled: bool
+
+
+@router.put("/engage/auto")
+def engage_auto(req: AutoReq) -> dict:
+    ops_db.put("auto_sync", req.enabled)
+    return {"ok": True}
+
+
+@router.get("/jobs/{job_id}")
+def job_status(job_id: str) -> dict:
+    j = ops_jobs.get(job_id)
+    if not j:
+        raise HTTPException(404, "任务不存在")
+    return j
+
+
+@router.get("/data/overview")
+def data_overview() -> list[dict]:
+    return ops_data.overview()
+
+
+@router.post("/data/refresh/{platform}")
+def data_refresh(platform: str) -> dict:
+    if platform not in {p["platform"] for p in ops_data.platforms()}:
+        raise HTTPException(404, "这个平台暂时不支持看数据")
+    return ops_jobs.start("data", platform, lambda job: ops_data.refresh(job, platform))

@@ -12,12 +12,15 @@ export type TabId =
   // 发布
   | 'center' | 'calendar' | 'records'
   // 账号与定位
-  | 'platforms' | 'persona';
+  | 'platforms' | 'persona'
+  // 互动
+  | 'comments' | 'dm';
 
 export const DEFAULT_TAB: Partial<Record<PageId, TabId>> = {
   inspire: 'trends',
   publish: 'center',
   accounts: 'platforms',
+  engage: 'comments',
 };
 
 export type Navigate = (page: PageId, tab?: TabId) => void;

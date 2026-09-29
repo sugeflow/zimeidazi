@@ -2,6 +2,7 @@
 // 待处理数量同时用于导航角标，所以放在 App 里调用一次，结果传给页面。
 import { useCallback, useEffect, useState } from 'react';
 import { fetchAccounts, fetchOutputs, fetchSchedule, fetchTrends } from '../lib/api';
+import { engageSummary } from '../lib/dazi';
 import type { AccountItem, OutputNode, PersonaItem, ScheduleItem, TrendGroup } from '../lib/api';
 import type { PageId, TabId } from '../shell/routes';
 
@@ -20,6 +21,8 @@ export interface TodayData {
   trends: TrendGroup[];
   week: ScheduleItem[];
   recent: OutputNode[];
+  /** 待回复的评论数 */
+  comments: number;
   loaded: boolean;
   reload: () => void;
 }
@@ -35,8 +38,14 @@ export function weekDays(now = new Date()): Date[] {
   return Array.from({ length: 7 }, (_, i) => { const d = new Date(monday); d.setDate(monday.getDate() + i); return d; });
 }
 
-function buildTodos(personas: PersonaItem[] | null, accounts: AccountItem[] | null, schedule: ScheduleItem[]): Todo[] {
+function buildTodos(personas: PersonaItem[] | null, accounts: AccountItem[] | null, schedule: ScheduleItem[], comments: number): Todo[] {
   const todos: Todo[] = [];
+  if (comments > 0) {
+    todos.push({
+      id: 'comments', tone: 'coral', emoji: '💬', title: `${comments} 条新评论待回复`,
+      desc: '搭子已经可以帮你起草回复，看过再发', action: '去回复', to: { page: 'engage', tab: 'comments' },
+    });
+  }
   if (personas && personas.length === 0) {
     todos.push({
       id: 'persona', tone: 'coral', emoji: '🧭', title: '先告诉搭子你的账号定位',
@@ -66,6 +75,7 @@ export function useToday(personas: PersonaItem[] | null): TodayData {
   const [schedule, setSchedule] = useState<ScheduleItem[]>([]);
   const [trends, setTrends] = useState<TrendGroup[]>([]);
   const [recent, setRecent] = useState<OutputNode[]>([]);
+  const [comments, setComments] = useState(0);
   const [loaded, setLoaded] = useState(false);
   const [tick, setTick] = useState(0);
 
@@ -74,6 +84,7 @@ export function useToday(personas: PersonaItem[] | null): TodayData {
     Promise.allSettled([
       fetchAccounts().then((v) => alive && setAccounts(v)),
       fetchSchedule().then((v) => alive && setSchedule(v)),
+      engageSummary().then((v) => alive && setComments(v.pending)),
       fetchTrends('douyin,weibo,zhihu', 4).then((v) => alive && setTrends(v.trends)),
       fetchOutputs().then((v) => {
         if (!alive) return;
@@ -89,5 +100,5 @@ export function useToday(personas: PersonaItem[] | null): TodayData {
   const days = weekDays().map(ymd);
   const week = schedule.filter((s) => days.includes(s.date));
   const reload = useCallback(() => setTick((t) => t + 1), []);
-  return { todos: buildTodos(personas, accounts, schedule), trends, week, recent, loaded, reload };
+  return { todos: buildTodos(personas, accounts, schedule, comments), trends, week, recent, comments, loaded, reload };
 }
