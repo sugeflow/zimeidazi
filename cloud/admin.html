@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>搭子云 · 激活码</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23EF5A3A'/%3E%3Ccircle cx='12' cy='15' r='2.4' fill='%23fff'/%3E%3Ccircle cx='20' cy='15' r='2.4' fill='%23fff'/%3E%3C/svg%3E">
+<style>
+  :root { --bg:#FBF3EA; --surface:#FFFDF9; --ink:#2B211C; --ink2:#6B5B51; --line:#EADCCD; --coral:#D4401F; --soft:#FDE7DE; --mint:#1F7A55; --danger:#B42318; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#1C1714; --surface:#26201C; --ink:#F4EBE3; --ink2:#BBA99C; --line:#3A302A; --soft:#3A2520; } }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 14px/1.6 -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; }
+  main { max-width: 1180px; margin: 0 auto; padding: 28px 16px 60px; }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  .muted { color: var(--ink2); font-size: 13px; }
+  .card { background: var(--surface); border: 1.5px solid var(--line); border-radius: 14px; padding: 16px; margin-top: 18px; }
+  form { display: flex; flex-wrap: wrap; gap: 10px; align-items: end; }
+  label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--ink2); }
+  input { height: 36px; padding: 0 10px; border: 1.5px solid var(--line); border-radius: 9px; background: var(--bg); color: var(--ink); font: inherit; }
+  button { height: 36px; padding: 0 14px; border: 0; border-radius: 9px; background: var(--coral); color: #fff; font: 600 13px/1 inherit; cursor: pointer; }
+  button.ghost { background: transparent; color: var(--ink2); border: 1.5px solid var(--line); height: 28px; padding: 0 8px; font-size: 12px; }
+  textarea { width: 100%; min-height: 90px; margin-top: 10px; padding: 10px; border: 1.5px solid var(--line); border-radius: 9px; background: var(--bg); color: var(--ink); font: 13px/1.6 ui-monospace, Menlo, monospace; }
+  .stats { display: flex; gap: 10px; flex-wrap: wrap; }
+  .stat { flex: 1; min-width: 130px; background: var(--surface); border: 1.5px solid var(--line); border-radius: 14px; padding: 12px 14px; }
+  .stat b { display: block; font-size: 24px; }
+  .table { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 900px; }
+  th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+  th { color: var(--ink2); font-weight: 600; font-size: 12px; }
+  code { font: 13px ui-monospace, Menlo, monospace; }
+  .tag { display: inline-block; padding: 1px 8px; border-radius: 6px; font-size: 12px; font-weight: 700; background: var(--soft); }
+  .tag.active { color: var(--mint); background: rgba(31,122,85,.12); }
+  .tag.disabled { color: var(--danger); }
+  .filter { margin-left: auto; }
+</style>
+</head>
+<body>
+<main>
+  <h1>搭子云 · 激活码</h1>
+  <p class="muted">一个激活码 = 一张会员卡，绑定一台电脑。每月额度：<span id="quota"></span></p>
+
+  <div class="stats" id="stats"></div>
+
+  <section class="card">
+    <form id="gen">
+      <label>数量<input name="count" type="number" min="1" max="200" value="10" style="width:90px"></label>
+      <label>天数<input name="days" type="number" min="1" value="30" style="width:90px"></label>
+      <label style="flex:1;min-width:200px">备注（渠道、批次）<input name="note" placeholder="比如：小红书 10 月第一批"></label>
+      <button>生成激活码</button>
+    </form>
+    <textarea id="out" readonly placeholder="生成的激活码会出现在这里，复制去卖就行" hidden></textarea>
+  </section>
+
+  <section class="card">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+      <b>全部激活码</b><span class="muted" id="count"></span>
+      <input class="filter" id="q" placeholder="搜激活码、备注、电脑名">
+    </div>
+    <div class="table"><table>
+      <thead><tr><th>激活码</th><th>状态</th><th>天数</th><th>到期</th><th>电脑</th><th>本月用量（对话/生图/视频）</th><th>备注</th><th>创建</th><th></th></tr></thead>
+      <tbody id="rows"></tbody>
+    </table></div>
+  </section>
+</main>
+<script>
+const $ = (s) => document.querySelector(s);
+const STATUS = { new: '未激活', active: '使用中', disabled: '已停用', renewed: '已续费合并' };
+const day = (t) => t ? new Date(t * 1000).toLocaleDateString('zh-CN') : '—';
+const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+let data = { codes: [] };
+
+async function api(path, body) {
+  const r = await fetch('/admin/api' + path, body ? { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) } : {});
+  const j = await r.json();
+  if (!r.ok) throw new Error(j.error?.message || '出错了');
+  return j;
+}
+
+function render() {
+  const q = $('#q').value.trim().toLowerCase();
+  const list = data.codes.filter((c) => !q || [c.code, c.note, c.device_name].join(' ').toLowerCase().includes(q));
+  const live = data.codes.filter((c) => c.status === 'active' && c.expires > data.now);
+  $('#quota').textContent = `对话 ${data.quota.chat} 次 · 生图 ${data.quota.image} 张 · 视频 ${data.quota.video} 条`;
+  $('#stats').innerHTML = [
+    ['使用中的会员', live.length], ['未激活的码', data.codes.filter((c) => c.status === 'new').length],
+    ['7 天内到期', live.filter((c) => c.expires - data.now < 7 * 86400).length], ['全部激活码', data.codes.length],
+  ].map(([k, v]) => `<div class="stat"><span class="muted">${k}</span><b>${v}</b></div>`).join('');
+  $('#count').textContent = `${list.length} 个`;
+  $('#rows').innerHTML = list.map((c) => {
+    const u = c.used || {};
+    const expired = c.status === 'active' && c.expires < data.now;
+    const acts = [
+      c.status === 'disabled' ? ['enable', '恢复'] : ['disable', '停用'],
+      c.device ? ['unbind', '解绑电脑'] : null,
+    ].filter(Boolean).map(([a, t]) => `<button class="ghost" data-code="${esc(c.code)}" data-act="${a}">${t}</button>`).join(' ');
+    return `<tr>
+      <td><code>${esc(c.code)}</code></td>
+      <td><span class="tag ${esc(c.status)}">${expired ? '已到期' : STATUS[c.status] || esc(c.status)}</span></td>
+      <td>${c.days}</td><td>${day(c.expires)}</td><td>${esc(c.device_name || (c.device ? '已绑定' : '—'))}</td>
+      <td>${u.chat || 0} / ${u.image || 0} / ${u.video || 0}</td>
+      <td>${esc(c.note)}</td><td>${day(c.created)}</td><td>${acts}</td></tr>`;
+  }).join('');
+}
+
+async function load() { data = await api('/codes'); render(); }
+
+$('#gen').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const f = new FormData(e.target);
+  try {
+    const r = await api('/codes', { count: +f.get('count'), days: +f.get('days'), note: f.get('note') });
+    $('#out').hidden = false; $('#out').value = r.codes.join('\n'); $('#out').select();
+    await load();
+  } catch (err) { alert(err.message); }
+});
+$('#rows').addEventListener('click', async (e) => {
+  const b = e.target.closest('button[data-act]');
+  if (!b) return;
+  const tip = { disable: '停用后这个会员马上不能用了，确定？', unbind: '解绑后可以在新电脑上重新激活，剩余天数不变。确定？' }[b.dataset.act];
+  if (tip && !confirm(tip)) return;
+  try { await api(`/codes/${encodeURIComponent(b.dataset.code)}/${b.dataset.act}`, {}); await load(); } catch (err) { alert(err.message); }
+});
+$('#q').addEventListener('input', render);
+load().catch((err) => { document.body.innerHTML = `<main><h1>打不开</h1><p class="muted">${esc(err.message)}</p></main>`; });
+</script>
+</body>
+</html>
