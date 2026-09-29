@@ -337,7 +337,7 @@ export default function AccountsPage() {
                 ) : (
                   // 公众号与其它平台统一：都走扫码登录（公众号扫的是后台会话，用于发布+数据）
                   <button
-                    className={`btn btn-block ${a.supported ? 'btn-primary' : ''}`}
+                    className="btn btn-block"
                     disabled={!a.supported || busy === a.platform || busy === a.platform + ':mp'}
                     onClick={() => (a.backend === 'wechat-oa' ? handleMpLogin(a) : handleLogin(a))}>
                     {(busy === a.platform || busy === a.platform + ':mp') ? '启动中…' : '登录'}
