@@ -4,6 +4,7 @@ import { fetchOutputs, fetchOutputContent, mediaUrl, deleteOutput } from '../lib
 import type { OutputNode, OutputMeta } from '../lib/api';
 import { renderMarkdown } from '../lib/sanitize';
 import { IconOutputs, IconImage, IconVideo, IconMusic, IconFile, IconFolder, IconRefresh, IconChevron, IconTrash } from './icons';
+import { alertDialog, confirmDialog } from '../ui/dialog';
 
 const FILTERS: { key: string; label: string }[] = [
   { key: 'all', label: '全部' },
@@ -136,13 +137,13 @@ export default function OutputsPage({ jumpPath, onJumpHandled }: OutputsPageProp
     e.stopPropagation();
     const isDir = node.type === 'dir';
     const label = isDir ? `项目/文件夹「${node.meta?.title || node.name}」及其全部内容` : `文件「${node.name}」`;
-    if (!window.confirm(`确定删除${label}？\n此操作不可恢复。`)) return;
+    if (!(await confirmDialog(`确定删除${label}？此操作不可恢复。`, { title: '删除作品', confirmText: '删除', danger: true }))) return;
     try {
       await deleteOutput(node.path);
       setSelected((cur) => (cur?.path === node.path ? null : cur));
       load();
     } catch (err) {
-      alert((err as Error).message || '删除失败');
+      await alertDialog((err as Error).message || '删除失败');
     }
   }, [load]);
 

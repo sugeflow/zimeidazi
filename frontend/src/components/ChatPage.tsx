@@ -7,6 +7,8 @@ import { uploadFiles, adoptOversize } from '../lib/api';
 import type { UploadedFile } from '../lib/api';
 import { IconArrowUp, IconStop, IconPlus, IconFile } from './icons';
 import logo from '../assets/brand/logo.png';
+import { greeting as dayGreeting } from '../lib/format';
+import { alertDialog } from '../ui/dialog';
 
 interface ChatPageProps {
   session: ChatSession;
@@ -32,7 +34,7 @@ const SUGGESTIONS = [
 
 function greeting(): string {
   const h = new Date().getHours();
-  const g = h < 6 ? '夜深了' : h < 12 ? '上午好' : h < 14 ? '中午好' : h < 18 ? '下午好' : '晚上好';
+  const g = dayGreeting(h);
   return `${g}，想创作点什么？`;
 }
 
@@ -68,7 +70,7 @@ export default function ChatPage({ session, stream, onSend, onStop, onResend, on
         const saved = await adoptOversize(big, session.id);
         setAttachments((a) => [...a, ...saved]);
       } catch (err) {
-        alert((err as Error).message || '超限文件处理失败');
+        await alertDialog((err as Error).message || '大文件处理失败');
       } finally {
         setUploading(false);
       }
@@ -79,7 +81,7 @@ export default function ChatPage({ session, stream, onSend, onStop, onResend, on
       const saved = await uploadFiles(small, session.id);
       setAttachments((a) => [...a, ...saved]);
     } catch (err) {
-      alert((err as Error).message || '上传失败');
+      await alertDialog((err as Error).message || '上传失败');
     } finally {
       setUploading(false);
     }

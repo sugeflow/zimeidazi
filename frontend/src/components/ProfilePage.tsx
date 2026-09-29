@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { fetchPersonaFiles, savePersonaFile, deletePersona, fetchAccountAnalytics } from '../lib/api';
 import type { PersonaFile, AccountAnalytics } from '../lib/api';
 import { renderMarkdown } from '../lib/sanitize';
+import { confirmDialog } from '../ui/dialog';
 
 // 粉丝量级：把粉丝数映射成人话档位（画像里“粉丝量级”一栏要的是量级而非精确值）
 function fanTier(n: number): string {
@@ -132,7 +133,7 @@ export default function ProfilePage({ persona, onNewProfile, onDeleted }: Profil
   };
 
   const handleDelete = async () => {
-    if (!window.confirm(`确定删除画像「${persona}」吗？\n此操作不可恢复，将删除该画像的全部六维文件。`)) return;
+    if (!(await confirmDialog(`删除后无法恢复，这个账号定位的所有设置都会清空。`, { title: `删除「${persona}」`, confirmText: '删除', danger: true }))) return;
     setDeleting(true);
     try {
       await deletePersona(persona);

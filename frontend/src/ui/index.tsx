@@ -1,5 +1,5 @@
 // 自媒搭子基础组件。样式在 styles/ui.css，token 在 styles/tokens.css。
-import type { ButtonHTMLAttributes, CSSProperties, HTMLAttributes, InputHTMLAttributes, ReactNode, TextareaHTMLAttributes } from 'react';
+import type { ButtonHTMLAttributes, CSSProperties, Ref, HTMLAttributes, InputHTMLAttributes, ReactNode, TextareaHTMLAttributes } from 'react';
 import { useId } from 'react';
 
 import welcome from '../assets/mascot/welcome.webp';
@@ -18,6 +18,7 @@ type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   block?: boolean;
   loading?: boolean;
   icon?: ReactNode;
+  ref?: Ref<HTMLButtonElement>;
 };
 
 export function Button({ variant = 'secondary', size = 'md', block, loading, icon, className, children, disabled, ...rest }: ButtonProps) {

@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { fetchTrends, createIdea } from '../lib/api';
+import { formatHot } from '../lib/format';
 import type { TrendGroup } from '../lib/api';
 import { IconFire, IconRefresh, IconBookmark, IconCheck } from './icons';
 
@@ -83,7 +84,7 @@ export default function TrendsPage({ onUseTopic }: TrendsPageProps) {
                   <div className="trend-main">
                     <a className="trend-title" href={it.url || undefined} target="_blank" rel="noreferrer"
                       title={it.title}>{it.title}</a>
-                    {it.hot && <span className="trend-hot">{it.hot}</span>}
+                    {it.hot && <span className="trend-hot">{formatHot(it.hot)}</span>}
                   </div>
                   <button className="trend-save" title={saved.has(it.title) ? '已收藏到选题库' : '收藏到选题库'}
                     onClick={() => save(it.title, g.label)}>

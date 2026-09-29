@@ -1,18 +1,22 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import Sidebar from './components/Sidebar';
-import type { Page } from './components/Sidebar';
+import Nav from './shell/Nav';
+import type { NavCounts } from './shell/Nav';
+import { DEFAULT_TAB } from './shell/routes';
+import type { PageId, TabId } from './shell/routes';
+import TodayPage from './pages/TodayPage';
+import type { RunningTask } from './pages/TodayPage';
+import { useToday } from './pages/useToday';
+import { ComingSoon, CreateFrame, TabbedPage } from './pages/frames';
 import ChatPage from './components/ChatPage';
 import SkillPage from './components/SkillPage';
 import OutputsPage from './components/OutputsPage';
 import AccountsPage from './components/AccountsPage';
 import ProfilePage from './components/ProfilePage';
-import DashboardPage from './components/DashboardPage';
 import TrendsPage from './components/TrendsPage';
 import CalendarPage from './components/CalendarPage';
 import IdeasPage from './components/IdeasPage';
 import PublishPage from './components/PublishPage';
 import BreakdownPage from './components/BreakdownPage';
-import SubNav from './components/SubNav';
 import OnboardingWizard from './components/OnboardingWizard';
 import SettingsPanel from './components/SettingsPanel';
 import { fetchStatus, fetchPersonas, streamChat, fetchLastTurn, stopChat } from './lib/api';
@@ -45,8 +49,14 @@ function onboardingSeen(): boolean {
 }
 
 export default function App() {
-  const [currentPage, setCurrentPage] = useState<Page>('dashboard');
+  const [currentPage, setCurrentPage] = useState<PageId>('today');
+  const [tabs, setTabs] = useState<Partial<Record<PageId, TabId>>>(DEFAULT_TAB);
+  const navigate = useCallback((page: PageId, tab?: TabId) => {
+    setCurrentPage(page);
+    if (tab) setTabs((t) => ({ ...t, [page]: tab }));
+  }, []);
   const [personas, setPersonas] = useState<PersonaItem[]>([]);
+  const [personasLoaded, setPersonasLoaded] = useState(false);
   const [selectedPersona, setSelectedPersona] = useState('');
   const [sessions, setSessions] = useState<ChatSession[]>(() => loadSessions());
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
@@ -66,7 +76,7 @@ export default function App() {
       let path = m[1];
       try { path = decodeURIComponent(path); } catch { /* 保留原样 */ }
       setOutputsJump(path);
-      setCurrentPage('outputs');
+      setCurrentPage('works');
       window.history.replaceState(null, '', window.location.pathname + window.location.search);
     };
     window.addEventListener('hashchange', onHash);
@@ -162,6 +172,7 @@ export default function App() {
     fetchStatus()
       .then((data) => {
         setPersonas(data.personas || []);
+        setPersonasLoaded(true);
         setGatewayStatus(data.gateway ? 'connected' : 'disconnected');
         // 首次使用：没有任何个性化画像 且 未看过引导 → 推荐配置
         if ((data.personas || []).length === 0 && !onboardingSeen()) {
@@ -524,7 +535,7 @@ export default function App() {
     const ns = createSession(selectedPersona || undefined);
     setSessions((prev) => { const u = [ns, ...prev]; saveSessions(u); return u; });
     setActiveSessionId(ns.id);
-    setCurrentPage('chat');
+    setCurrentPage('create');
     sendUserAndStream(ns.id, prompt);
   }, [selectedPersona, sendUserAndStream]);
 
@@ -562,26 +573,6 @@ export default function App() {
     });
   }, []);
 
-  const handleSessionArchive = useCallback((id: string, archived: boolean) => {
-    setSessions((prev) => {
-      const next = prev.map((s) => (s.id === id ? { ...s, archived } : s));
-      saveSessions(next);
-      return next;
-    });
-    // 归档当前激活会话 → 切到另一个未归档会话或新建
-    if (archived && id === activeSessionId) {
-      const rest = sessionsRef.current.filter((s) => s.id !== id && !s.archived);
-      if (rest.length) {
-        setActiveSessionId(rest[0].id);
-      } else {
-        const ns = createSession(selectedPersona || undefined);
-        setSessions((prev) => { const u = [ns, ...prev]; saveSessions(u); return u; });
-        setActiveSessionId(ns.id);
-      }
-      setCurrentPage('chat');
-    }
-  }, [activeSessionId, selectedPersona]);
-
   const handleNewChat = useCallback(() => {
     const newSession = createSession(selectedPersona || undefined);
     setSessions((prev) => {
@@ -590,7 +581,7 @@ export default function App() {
       return updated;
     });
     setActiveSessionId(newSession.id);
-    setCurrentPage('chat');
+    setCurrentPage('create');
   }, [selectedPersona]);
 
   const handleSessionSelect = useCallback((id: string) => {
@@ -599,11 +590,11 @@ export default function App() {
     if (target) {
       setSelectedPersona(target.persona || '');
     }
-    setCurrentPage('chat');
+    setCurrentPage('create');
   }, [sessions]);
 
+  // 确认在界面里做（历史栏两步确认）：桌面 WebView 不一定支持 window.confirm
   const handleSessionDelete = useCallback((id: string) => {
-    if (!window.confirm('确定删除这条对话？')) return;
 
     const target = sessionsRef.current.find((s) => s.id === id);
     const wasRunning = Boolean(streamCtl.current[id]);
@@ -665,9 +656,9 @@ export default function App() {
         return updated;
       });
       setActiveSessionId(newSession.id);
-      setCurrentPage('profile');
+      navigate('accounts', 'persona');
     }).catch(() => {});
-  }, []);
+  }, [navigate]);
 
   // 画像删除完成：刷新列表 + 若删的是当前选中的则清空选择
   const handleProfileDeleted = useCallback((name: string) => {
@@ -678,19 +669,61 @@ export default function App() {
   }, []);
 
   // 流式生命周期在 App，页面切换随意——ChatPage 可自由卸载/重挂，回来从 props 读流式态即可。
+  const today = useToday(personasLoaded ? personas : null);
+  const streamingIds = Object.keys(streams);
+  const running: RunningTask[] = streamingIds.map((id) => {
+    const s = sessions.find((x) => x.id === id);
+    return { sessionId: id, title: s?.title || '新的创作', activity: streams[id]?.activity || '' };
+  });
+  const counts: NavCounts = { today: today.todos.length };
+
+  // 从「今天」页的大输入框开始：新开一个创作，发出去，跳到 AI 创作页
+  const handleStartChat = useCallback((text: string) => {
+    const ns = createSession(selectedPersona || undefined);
+    setSessions((prev) => { const u = [ns, ...prev]; saveSessions(u); return u; });
+    setActiveSessionId(ns.id);
+    setCurrentPage('create');
+    sendUserAndStream(ns.id, text);
+  }, [selectedPersona, sendUserAndStream]);
+
+  const tabOf = (page: PageId) => tabs[page] ?? DEFAULT_TAB[page]!;
+  const setTab = (page: PageId) => (t: TabId) => setTabs((x) => ({ ...x, [page]: t }));
+
   const renderPage = () => {
     switch (currentPage) {
-      case 'dashboard':
+      case 'today':
         return (
-          <DashboardPage
-            persona={selectedPersona}
-            gatewayStatus={gatewayStatus}
-            onNavigate={setCurrentPage}
-            onUseTopic={handleUseTopic}
+          <TodayPage
+            data={today} persona={selectedPersona} running={running}
+            onNavigate={navigate} onNewPersona={() => setShowWizard(true)}
+            onStartChat={handleStartChat} onUseTopic={handleUseTopic} onOpenSession={handleSessionSelect}
           />
         );
-      case 'chat':
-        return activeSession ? (
+      case 'inspire':
+        return (
+          <TabbedPage
+            title="找灵感" desc="热点、选题和爆款拆解，都在这里" tab={tabOf('inspire')} onTab={setTab('inspire')}
+            tabs={[{ value: 'trends', label: '热点' }, { value: 'ideas', label: '选题库' }, { value: 'breakdown', label: '拆解爆款' }, { value: 'bench', label: '对标账号' }]}
+          >
+            {tabOf('inspire') === 'trends' && <TrendsPage onUseTopic={handleUseTopic} />}
+            {tabOf('inspire') === 'ideas' && <IdeasPage onUseTopic={handleUseTopic} />}
+            {tabOf('inspire') === 'breakdown' && <BreakdownPage persona={selectedPersona} />}
+            {tabOf('inspire') === 'bench' && (
+              <ComingSoon
+                title="对标账号" desc="关注几个同领域的优秀账号，他们发了新作品，搭子会第一时间告诉你，还能一键拆解。"
+                points={['添加对标账号的主页链接', '新作品提醒，附带点赞、收藏数据', '一键拆解：为什么火、你能怎么借鉴']}
+              />
+            )}
+          </TabbedPage>
+        );
+      case 'create':
+        return (
+          <CreateFrame
+            sessions={sessions} activeId={activeSessionId} streamingIds={streamingIds}
+            onSelect={handleSessionSelect} onNew={handleNewChat} onDelete={handleSessionDelete} onRename={handleSessionRename}
+            onAllSkills={() => setCurrentPage('skills')}
+          >
+            {activeSession ? (
           <ChatPage
             key={activeSession.id}
             session={activeSession}
@@ -718,25 +751,57 @@ export default function App() {
               }
             }}
           />
-        ) : null;
-      case 'trends':
-        return <TrendsPage onUseTopic={handleUseTopic} />;
-      case 'ideas':
-        return <IdeasPage onUseTopic={handleUseTopic} />;
-      case 'calendar':
-        return <CalendarPage />;
-      case 'publish':
-        return <PublishPage persona={selectedPersona} />;
-      case 'breakdown':
-        return <BreakdownPage persona={selectedPersona} />;
+) : null}
+          </CreateFrame>
+        );
       case 'skills':
         return <SkillPage persona={selectedPersona} />;
-      case 'outputs':
+      case 'works':
         return <OutputsPage jumpPath={outputsJump} onJumpHandled={clearOutputsJump} />;
+      case 'publish':
+        return (
+          <TabbedPage
+            title="发布" desc="一份内容，适配后发到多个平台" tab={tabOf('publish')} onTab={setTab('publish')}
+            tabs={[{ value: 'center', label: '发布中心' }, { value: 'calendar', label: '内容日历' }, { value: 'records', label: '发布记录' }]}
+          >
+            {tabOf('publish') === 'center' && <PublishPage persona={selectedPersona} />}
+            {tabOf('publish') === 'calendar' && <CalendarPage />}
+            {tabOf('publish') === 'records' && (
+              <ComingSoon
+                title="发布记录" desc="每一次发布的进度和结果都记在这里，失败了能看到原因，一键重试。"
+                points={['正在发布、已发布、失败，一目了然', '失败原因用大白话说清楚', '平台要求验证时及时提醒你']}
+              />
+            )}
+          </TabbedPage>
+        );
+      case 'engage':
+        return (
+          <ComingSoon
+            title="互动" desc="你作品下的新评论和私信，会汇总到这里。搭子按你的账号定位起草回复，你看过点确认才会发出去。"
+            points={['小红书、抖音、快手的新评论提醒', 'AI 起草回复，你确认后才发送', '私信汇总，不错过合作咨询']}
+            action={{ label: '先去登录平台账号', onClick: () => navigate('accounts', 'platforms') }}
+          />
+        );
+      case 'data':
+        return (
+          <ComingSoon
+            title="数据" desc="粉丝和每篇作品的表现，搭子帮你看懂数据，告诉你下一篇该怎么做。"
+            points={['粉丝、点赞、收藏的变化趋势', '哪篇作品表现最好、为什么', '每周复盘建议']}
+            action={{ label: '先去登录平台账号', onClick: () => navigate('accounts', 'platforms') }}
+          />
+        );
       case 'accounts':
-        return <AccountsPage />;
-      case 'profile':
-        return <ProfilePage persona={selectedPersona} onNewProfile={() => setShowWizard(true)} onDeleted={handleProfileDeleted} />;
+        return (
+          <TabbedPage
+            title="账号与定位" desc="登录发布平台，告诉搭子你的账号是做什么的" tab={tabOf('accounts')} onTab={setTab('accounts')}
+            tabs={[{ value: 'platforms', label: '平台账号' }, { value: 'persona', label: '账号定位' }]}
+          >
+            {tabOf('accounts') === 'platforms' && <AccountsPage />}
+            {tabOf('accounts') === 'persona' && (
+              <ProfilePage persona={selectedPersona} onNewProfile={() => setShowWizard(true)} onDeleted={handleProfileDeleted} />
+            )}
+          </TabbedPage>
+        );
       default:
         return null;
     }
@@ -744,7 +809,6 @@ export default function App() {
 
   const handlePersonaChange = useCallback((persona: string) => {
     setSelectedPersona(persona);
-    setCurrentPage('chat');
     // 修复：选/切画像不再新建空会话丢上下文。就地把当前会话的画像设为新选的、
     // 保留会话 id 与历史（画像只是每轮的系统前缀，中途换安全）。想开新线程用「New Chat」。
     const cur = sessionsRef.current.find((s) => s.id === activeSessionId);
@@ -765,28 +829,15 @@ export default function App() {
 
   return (
     <div className="app-layout">
-      <Sidebar
-        currentPage={currentPage}
-        onPageChange={setCurrentPage}
-        personas={personas}
-        selectedPersona={selectedPersona}
-        onPersonaChange={handlePersonaChange}
-        onNewProfile={() => setShowWizard(true)}
-        sessions={sessions}
-        activeSessionId={activeSessionId}
-        activeSessionHasMessages={activeSession ? activeSession.messages.length > 0 : false}
-        onSessionSelect={handleSessionSelect}
-        onSessionDelete={handleSessionDelete}
-        onSessionRename={handleSessionRename}
-        onSessionArchive={handleSessionArchive}
-        onNewChat={handleNewChat}
-        gatewayStatus={gatewayStatus}
+      <Nav
+        page={currentPage} onNavigate={navigate}
+        personas={personas} persona={selectedPersona}
+        onPersonaChange={handlePersonaChange} onNewPersona={() => setShowWizard(true)}
+        counts={counts} membership={null}
+        gatewayOnline={gatewayStatus === 'connecting' ? null : gatewayStatus === 'connected'}
         onOpenSettings={() => setSettingsOpen(true)}
       />
       <main className="main-content">
-        {(['trends', 'ideas', 'calendar', 'publish', 'breakdown'] as Page[]).includes(currentPage) && (
-          <SubNav current={currentPage} onNavigate={setCurrentPage} />
-        )}
         <div className="page-host">
           {renderPage()}
         </div>

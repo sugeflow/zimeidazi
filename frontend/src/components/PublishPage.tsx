@@ -7,6 +7,7 @@ import type { AccountItem, OutputFile } from '../lib/api';
 import { loadPublishDraft, savePublishDraft } from '../lib/store';
 import { renderMarkdown } from '../lib/sanitize';
 import { IconPublish, IconCopy, IconCheck, IconCalendar, IconSkills, IconEdit, IconStop, IconTrash } from './icons';
+import { confirmDialog } from '../ui/dialog';
 
 interface PublishPageProps {
   persona: string;
@@ -189,10 +190,10 @@ export default function PublishPage({ persona }: PublishPageProps) {
     } finally {
       setChecking(false);
     }
-    const okToSend = window.confirm(
-      `发布前预检已执行，结果已显示在页面中。人设评分只做提醒，不会阻止发布。\n\n` +
-      `即将【真实发布】到：${targets.map((t) => t.label).join('、')}。\n` +
-      `这会公开发布到你的账号，确定继续？`);
+    const okToSend = await confirmDialog(
+      `即将公开发布到：${targets.map((t) => t.label).join('、')}。\n\n` +
+      `发布前检查的结果已经显示在页面上，只做提醒，不会拦住你。确定发布吗？`,
+      { title: '确认发布', confirmText: '确定发布' });
     if (!okToSend) return;
 
     setPublishing(true);

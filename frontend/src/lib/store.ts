@@ -156,7 +156,7 @@ export function saveSessions(sessions: ChatSession[]): void {
 export function createSession(persona?: string): ChatSession {
   return {
     id: generateId(),
-    title: 'New Chat',
+    title: '新的创作',
     messages: [],
     persona,
     created: Date.now(),
@@ -276,7 +276,7 @@ export function generateSessionTitle(message: string, _seed = message): string {
 
 export function updateSessionTitle(session: ChatSession): void {
   const first = Array.isArray(session.messages) ? session.messages[0] : undefined;
-  if (first && session.title === 'New Chat') {
+  if (first && (session.title === '新的创作' || session.title === 'New Chat')) {
     session.title = generateSessionTitle(first.content || '', session.id);
   }
 }

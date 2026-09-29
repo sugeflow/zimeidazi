@@ -6,6 +6,7 @@ import {
 } from '../lib/api';
 import type { AccountItem, AccountWhoami } from '../lib/api';
 import { getWhoamiCache, setWhoamiCache, verifyStale } from '../lib/whoami';
+import { confirmDialog } from '../ui/dialog';
 
 type QRState = {
   platform: string;
@@ -244,7 +245,7 @@ export default function AccountsPage() {
   }, [stopPoll, runWhoami, load]);
 
   const handleLogout = useCallback(async (a: AccountItem) => {
-    if (!window.confirm(`确定退出「${a.name}」的登录？登录态将被清除，下次发布需重新扫码。`)) return;
+    if (!(await confirmDialog(`退出后，下次发布需要重新扫码登录「${a.name}」。`, { title: '退出登录', confirmText: '退出', danger: true }))) return;
     setLogoutBusy(a.platform);
     try {
       await logoutAccount(a.platform);
