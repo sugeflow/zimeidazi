@@ -196,8 +196,8 @@ body {
 .btn:disabled { opacity: 0.45; cursor: not-allowed; }
 
 .btn-primary {
-  border: none; background: var(--text); color: #fff;
-  box-shadow: 0 4px 14px rgba(23,25,28,0.16);
+  border: none; background: var(--dz-primary); color: var(--dz-on-primary);
+  box-shadow: var(--dz-sticker-primary);
 }
 .btn-primary:hover:not(:disabled) { filter: brightness(1.15); box-shadow: 0 6px 20px rgba(23,25,28,0.2); }
 .btn-ghost { background: transparent; }
@@ -349,7 +349,7 @@ textarea.field { resize: vertical; min-height: 90px; }
 /* Composer 输入框（空态放大居中，对话态置底） */
 .composer {
   width: 100%;
-  background: rgba(255,255,255,.88); border: 1px solid rgba(23,25,28,.09);
+  background: var(--dz-surface); border: 1.5px solid var(--dz-line-strong);
   border-radius: var(--radius-xl); padding: 12px 14px 8px;
   backdrop-filter: blur(18px);
   box-shadow: var(--shadow-sm); transition: border-color var(--t-fast), box-shadow var(--t-fast);

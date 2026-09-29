@@ -14,12 +14,8 @@ export function getThemePref(): ThemePref {
   return 'system';
 }
 
-// 深色模式要等旧页面全部重写后才开放（旧样式里写死了浅色）；目前只有设计系统展示页可用。
-// 与 index.html 内联脚本里的 DARK_READY 保持一致
-const DARK_READY = () => location.hash === '#design';
-
 function apply(pref: ThemePref) {
-  const dark = DARK_READY() && (pref === 'dark' || (pref === 'system' && media.matches));
+  const dark = pref === 'dark' || (pref === 'system' && media.matches);
   document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
 }
 

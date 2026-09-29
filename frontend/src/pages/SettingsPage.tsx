@@ -4,7 +4,9 @@ import { fetchInfo, openFolder } from '../lib/dazi';
 import type { DaziInfo } from '../lib/dazi';
 import { formatBytes } from '../lib/format';
 import { alertDialog } from '../ui/dialog';
-import { Button, Card, Tag } from '../ui';
+import { Button, Card, Segmented, Tag } from '../ui';
+import { getThemePref, setThemePref } from '../lib/theme';
+import type { ThemePref } from '../lib/theme';
 
 function Row({ title, desc, children }: { title: string; desc?: React.ReactNode; children?: React.ReactNode }) {
   return (
@@ -18,6 +20,7 @@ function Row({ title, desc, children }: { title: string; desc?: React.ReactNode;
 export default function SettingsPage({ onReplayGuide }: { onReplayGuide: () => void }) {
   const [info, setInfo] = useState<DaziInfo | null>(null);
   const [failed, setFailed] = useState(false);
+  const [theme, setTheme] = useState<ThemePref>(getThemePref);
   useEffect(() => { fetchInfo().then(setInfo).catch(() => setFailed(true)); }, []);
 
   const open = async (target: 'outputs' | 'logs') => {
@@ -35,6 +38,17 @@ export default function SettingsPage({ onReplayGuide }: { onReplayGuide: () => v
         <Card>
           <Row title="测试版" desc="现在免费体验全部功能。正式版上线后，在这里输入激活码开通月度会员。">
             <Tag tone="sun">免费体验中</Tag>
+          </Row>
+        </Card>
+      </section>
+
+      <section>
+        <h2 className="dz-h2">外观</h2>
+        <Card>
+          <Row title="深浅色" desc="跟随系统时，电脑切换深色模式，软件也会跟着变。">
+            <Segmented label="深浅色" value={theme} onChange={(v) => { setTheme(v); setThemePref(v); }} options={[
+              { value: 'system', label: '跟随系统' }, { value: 'light', label: '浅色' }, { value: 'dark', label: '深色' },
+            ]} />
           </Row>
         </Card>
       </section>
