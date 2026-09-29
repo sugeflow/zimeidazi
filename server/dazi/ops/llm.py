@@ -1,5 +1,6 @@
 """直接调用对话模型（OpenAI 兼容接口），用于起草回复这类短任务，比走完整的 Agent 快得多。
-模型地址和密钥读 <app>/.env 里的 DAZI_LLM_*，和 Agent 用的是同一套（M3 起换成搭子云的地址和令牌）。"""
+模型地址和密钥读 <app>/.env：优先 DAZI_FAST_*（短任务专用），没有就用 Agent 的 DAZI_LLM_*
+（M3 起换成搭子云的地址和令牌）。"""
 
 from __future__ import annotations
 
@@ -29,7 +30,9 @@ def _env() -> dict[str, str]:
 
 def chat(messages: list[dict], *, json_mode: bool = False, timeout: int = 90) -> str:
     env = _env()
-    base, key, model = (env.get(k, "") for k in ("DAZI_LLM_BASE_URL", "DAZI_LLM_API_KEY", "DAZI_LLM_MODEL"))
+    # 短任务可以单独配一个更快、更便宜的模型（DAZI_FAST_*）；没配就用 Agent 的模型
+    prefix = "DAZI_FAST" if env.get("DAZI_FAST_MODEL") else "DAZI_LLM"
+    base, key, model = (env.get(f"{prefix}_{k}", "") for k in ("BASE_URL", "API_KEY", "MODEL"))
     if not (base and key and model):
         raise LLMError("还没有配置模型（激活后自动配置）")
     body: dict = {"model": model, "messages": messages, "temperature": 0.8}
