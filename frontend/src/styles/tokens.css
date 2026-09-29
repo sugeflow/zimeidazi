@@ -1,0 +1,137 @@
+/* ==========================================================================
+   自媒搭子设计 token · 方向 A「暖橙手帐」
+   - 组件只使用 --dz-* 语义 token，不写死颜色
+   - 深色模式：<html data-theme="dark">。"跟随系统"由 index.html 里的内联脚本和 lib/theme.ts
+     解析成 light/dark 后写到 data-theme 上，所以深色值只需要定义一次
+   - 对比度已校验（WCAG AA）：正文文字 ≥ 4.5:1；--dz-ink-3 只用于占位符和非关键提示
+   ========================================================================== */
+
+:root {
+  /* ---- 品牌 ---- */
+  --dz-coral: #EF5A3A;          /* logo 色：装饰、插画、下划线、高亮。白字对比度不够，不做按钮底色 */
+  --dz-primary: #D4401F;        /* 主按钮、角标等白字底色（白字 4.61:1） */
+  --dz-primary-press: #B0341A;  /* 按下态 + 贴纸阴影 */
+
+  /* ---- 表面 ---- */
+  --dz-bg: #FBF5EC;             /* 奶油纸色，页面底 */
+  --dz-surface: #FFFDF9;        /* 卡片、输入框 */
+  --dz-surface-2: #F5ECDF;      /* 凹陷区：chip、分段控件底、代码块 */
+  --dz-hover: #F3E9DB;
+  --dz-line: #EDE1D2;
+  --dz-line-strong: #DDCDB9;
+
+  /* ---- 文字 ---- */
+  --dz-ink: #2B211C;
+  --dz-ink-2: #6F6158;
+  --dz-ink-3: #8C7C6F;
+  --dz-on-primary: #FFFFFF;
+
+  /* ---- 语义色（soft 底 + ink 字，均 ≥ 4.5:1） ---- */
+  --dz-coral-soft: #FDE6DD;  --dz-coral-ink: #B63E22;
+  --dz-sun: #F6B53B;         --dz-sun-soft: #FDF0D3;   --dz-sun-ink: #7F5A0C;
+  --dz-mint: #3FAF7A;        --dz-mint-soft: #DDF1E6;  --dz-mint-ink: #2A6F4D;
+  --dz-sky-soft: #E3ECFB;    --dz-sky-ink: #2F5BA8;
+  --dz-danger: #C3352B;      --dz-danger-soft: #FBE3E1;
+
+  /* ---- 形状 ---- */
+  --dz-r-sm: 8px;
+  --dz-r: 12px;
+  --dz-r-lg: 16px;
+  --dz-r-xl: 20px;
+  --dz-r-pill: 999px;
+
+  /* ---- 阴影：贴纸感来自实心偏移阴影，而不是模糊投影 ---- */
+  --dz-shadow-soft: 0 1px 2px rgba(43, 33, 28, 0.04), 0 6px 20px rgba(43, 33, 28, 0.06);
+  --dz-shadow-pop: 0 12px 36px rgba(43, 33, 28, 0.14);
+  --dz-sticker-primary: 0 3px 0 var(--dz-primary-press);
+  --dz-sticker-ink: 4px 4px 0 var(--dz-ink);
+
+  /* ---- 字体：系统字体，不从网络加载 ---- */
+  --dz-font: -apple-system, "PingFang SC", "Microsoft YaHei UI", "Microsoft YaHei", "Segoe UI", sans-serif;
+  --dz-font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  /* 字号 6 级 */
+  --dz-fs-xs: 12px;
+  --dz-fs-sm: 13.5px;
+  --dz-fs-md: 15px;
+  --dz-fs-lg: 17px;
+  --dz-fs-xl: 22px;
+  --dz-fs-2xl: 32px;
+
+  /* ---- 间距（4 的倍数） ---- */
+  --dz-s1: 4px; --dz-s2: 8px; --dz-s3: 12px; --dz-s4: 16px;
+  --dz-s5: 20px; --dz-s6: 24px; --dz-s8: 32px; --dz-s10: 40px;
+
+  /* ---- 动效 ---- */
+  --dz-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --dz-t-fast: 120ms var(--dz-ease);
+  --dz-t: 200ms var(--dz-ease);
+
+  --dz-focus: 0 0 0 3px rgba(212, 64, 31, 0.28);
+
+  color-scheme: light;
+}
+
+/* ---- 深色：暖调深棕，而不是纯黑 ---- */
+:root[data-theme="dark"] {
+  --dz-coral: #FF7657;
+  --dz-primary: #D4401F;
+  --dz-primary-press: #8E2A15;
+  --dz-bg: #1A1512;
+  --dz-surface: #241E1A;
+  --dz-surface-2: #2E2621;
+  --dz-hover: #332A24;
+  --dz-line: #3A312A;
+  --dz-line-strong: #4A3F36;
+  --dz-ink: #F4ECE3;
+  --dz-ink-2: #BFB1A4;
+  --dz-ink-3: #948679;
+  --dz-coral-soft: rgba(255, 118, 87, 0.16);  --dz-coral-ink: #FF9A80;
+  --dz-sun-soft: rgba(246, 181, 59, 0.16);    --dz-sun-ink: #F6C766;
+  --dz-mint-soft: rgba(63, 175, 122, 0.18);   --dz-mint-ink: #7FD6A8;
+  --dz-sky-soft: rgba(96, 140, 220, 0.18);    --dz-sky-ink: #9DBBF0;
+  --dz-danger: #FF7A6E;                       --dz-danger-soft: rgba(255, 122, 110, 0.16);
+  --dz-shadow-soft: 0 1px 2px rgba(0, 0, 0, 0.3), 0 6px 20px rgba(0, 0, 0, 0.25);
+  --dz-shadow-pop: 0 12px 36px rgba(0, 0, 0, 0.45);
+  --dz-sticker-ink: 4px 4px 0 #000;
+  --dz-focus: 0 0 0 3px rgba(255, 118, 87, 0.35);
+  color-scheme: dark;
+}
+
+/* ==========================================================================
+   旧变量 → 新 token 的映射
+   上游页面（U2–U4 逐页重写前）直接用新配色。页面重写完成后删掉这一段。
+   ========================================================================== */
+:root {
+  --bg: var(--dz-bg);
+  --bg-elev: var(--dz-surface);
+  --surface: var(--dz-surface);
+  --surface-2: var(--dz-surface-2);
+  --surface-hover: var(--dz-hover);
+  --border: var(--dz-line);
+  --border-strong: var(--dz-line-strong);
+  --text: var(--dz-ink);
+  --text-secondary: var(--dz-ink-2);
+  --text-tertiary: var(--dz-ink-3);
+  --accent-start: var(--dz-primary);
+  --accent-end: var(--dz-primary);
+  --accent-soft: var(--dz-coral-soft);
+  --accent-gradient: var(--dz-primary);
+  --accent-gradient-soft: var(--dz-coral-soft);
+  --green: var(--dz-mint-ink);
+  --green-soft: var(--dz-mint-soft);
+  --trend-up: var(--dz-mint);
+  --trend-down: var(--dz-danger);
+  --amber: var(--dz-sun-ink);
+  --amber-soft: var(--dz-sun-soft);
+  --red: var(--dz-danger);
+  --red-soft: var(--dz-danger-soft);
+  --code-bg: var(--dz-surface-2);
+  --radius-sm: var(--dz-r-sm);
+  --radius: var(--dz-r);
+  --radius-lg: var(--dz-r-lg);
+  --radius-xl: var(--dz-r-xl);
+  --shadow-sm: var(--dz-shadow-soft);
+  --shadow-md: var(--dz-shadow-soft);
+  --shadow-lg: var(--dz-shadow-pop);
+  --glow: var(--dz-focus);
+}

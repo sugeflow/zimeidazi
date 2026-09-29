@@ -1,30 +1,5 @@
 :root {
-  /* ---- Palette (reuse the main landing page's paper, mist, blue and peach) ---- */
-  --bg: #ffffff;
-  --bg-elev: #ffffff;
-  --surface: #ffffff;
-  --surface-2: #fafafb;
-  --surface-hover: #f2f2f3;
-  --border: #e7e7e8;
-  --border-strong: #d6d7d9;
-  --text: #17191c;
-  --text-secondary: #777b86;
-  --text-tertiary: #979799;
-  --accent-start: #158f9a;
-  --accent-end: #3f56a8;
-  --accent-soft: rgba(220, 234, 251, 0.72);
-  --accent-gradient: linear-gradient(135deg, var(--accent-start), var(--accent-end));
-  --accent-gradient-soft: linear-gradient(135deg, #eaf3fd, #fbede4);
-  --green: #16a34a;
-  --trend-up: #70a98a;
-  --trend-down: #c98585;
-  --green-soft: rgba(22, 163, 74, 0.12);
-  --amber: #d97706;
-  --amber-soft: rgba(217, 119, 6, 0.14);
-  --red: #dc2626;
-  --red-soft: rgba(220, 38, 38, 0.10);
-  --code-bg: #f4f4f5;
-
+  /* 颜色、圆角、阴影已移到 tokens.css（含旧变量名映射）；这里只保留页面专用的变量 */
   /* ---- Layer accent colors (SKILL 分区，浅底加深保证可读) ---- */
   --layer-discover: #0ea5e9;
   --layer-plan: #7c3aed;
@@ -35,14 +10,6 @@
 
   /* ---- Shape & motion ---- */
   --sidebar-width: 264px;
-  --radius-sm: 6px;
-  --radius: 9px;
-  --radius-lg: 14px;
-  --radius-xl: 20px;
-  --shadow-sm: 0 1px 3px rgba(23, 25, 28, 0.05);
-  --shadow-md: 0 10px 30px rgba(23, 25, 28, 0.08);
-  --shadow-lg: 0 20px 50px rgba(23, 25, 28, 0.14);
-  --glow: 0 0 0 1px rgba(63,86,168,0.18), 0 10px 30px rgba(51,66,148,0.1);
   --ease: cubic-bezier(0.4, 0, 0.2, 1);
   --t-fast: 0.14s var(--ease);
   --t: 0.22s var(--ease);
@@ -61,7 +28,7 @@ html, body, #root {
 }
 
 body {
-  font-family: 'Manrope', 'Avenir Next', 'Noto Sans SC', 'Microsoft YaHei', sans-serif;
+  font-family: var(--dz-font);
   color: var(--text);
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;

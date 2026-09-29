@@ -1,0 +1,210 @@
+/* ==========================================================================
+   自媒搭子基础组件（dz- 前缀，与上游旧样式隔离）。React 封装在 src/ui/。
+   只使用 tokens.css 里的 --dz-* token。
+   ========================================================================== */
+
+/* ---- 按钮 ---- */
+.dz-btn {
+  --_h: 38px;
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--dz-s2);
+  height: var(--_h); padding: 0 var(--dz-s4);
+  border: 1.5px solid transparent; border-radius: var(--dz-r);
+  font: 600 var(--dz-fs-sm)/1 var(--dz-font); white-space: nowrap;
+  cursor: pointer; user-select: none;
+  transition: transform var(--dz-t-fast), box-shadow var(--dz-t-fast), background var(--dz-t-fast), border-color var(--dz-t-fast);
+}
+.dz-btn:focus-visible { outline: none; box-shadow: var(--dz-focus); }
+.dz-btn:disabled, .dz-btn[aria-disabled="true"] { opacity: 0.45; cursor: not-allowed; }
+.dz-btn--sm { --_h: 30px; padding: 0 var(--dz-s3); font-size: var(--dz-fs-xs); border-radius: var(--dz-r-sm); }
+.dz-btn--lg { --_h: 46px; padding: 0 var(--dz-s6); font-size: var(--dz-fs-md); border-radius: var(--dz-r-lg); }
+.dz-btn--block { width: 100%; }
+
+/* 主按钮：贴纸阴影，按下时"压进去" */
+.dz-btn--primary {
+  background: var(--dz-primary); color: var(--dz-on-primary);
+  box-shadow: var(--dz-sticker-primary);
+}
+.dz-btn--primary:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 4px 0 var(--dz-primary-press); }
+.dz-btn--primary:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 0 0 var(--dz-primary-press); }
+.dz-btn--primary:focus-visible { box-shadow: var(--dz-sticker-primary), var(--dz-focus); }
+
+.dz-btn--secondary { background: var(--dz-surface); color: var(--dz-ink); border-color: var(--dz-line-strong); }
+.dz-btn--secondary:hover:not(:disabled) { background: var(--dz-hover); }
+
+.dz-btn--ghost { background: transparent; color: var(--dz-ink-2); }
+.dz-btn--ghost:hover:not(:disabled) { background: var(--dz-hover); color: var(--dz-ink); }
+
+.dz-btn--link { background: none; border: 0; height: auto; padding: 0; color: var(--dz-coral-ink); font-weight: 700; }
+.dz-btn--link:hover:not(:disabled) { text-decoration: underline; text-underline-offset: 3px; }
+
+.dz-btn--danger { background: var(--dz-danger-soft); color: var(--dz-danger); }
+.dz-btn--danger:hover:not(:disabled) { background: var(--dz-danger); color: #fff; }
+
+.dz-btn__spin {
+  width: 14px; height: 14px; border-radius: 50%;
+  border: 2px solid currentColor; border-right-color: transparent;
+  animation: dz-spin 0.7s linear infinite;
+}
+
+/* ---- 卡片 ---- */
+.dz-card {
+  background: var(--dz-surface);
+  border: 1.5px solid var(--dz-line);
+  border-radius: var(--dz-r-lg);
+  padding: var(--dz-s4) var(--dz-s5);
+}
+.dz-card--interactive { cursor: pointer; transition: transform var(--dz-t-fast), border-color var(--dz-t-fast), box-shadow var(--dz-t-fast); }
+.dz-card--interactive:hover { transform: translateY(-2px); border-color: var(--dz-line-strong); box-shadow: var(--dz-shadow-soft); }
+.dz-card--interactive:focus-visible { outline: none; box-shadow: var(--dz-focus); }
+.dz-card--sunken { background: var(--dz-surface-2); border-color: transparent; }
+.dz-card__title { font-size: var(--dz-fs-md); font-weight: 700; color: var(--dz-ink); margin-bottom: var(--dz-s2); }
+
+/* ---- 标签：来源、状态。--tilt 让它像贴上去的小纸条 ---- */
+.dz-tag {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 3px 9px; border-radius: 7px;
+  font: 700 11.5px/1.4 var(--dz-font); white-space: nowrap;
+  background: var(--dz-surface-2); color: var(--dz-ink-2);
+}
+.dz-tag--tilt { transform: rotate(-2deg); }
+.dz-tag--coral { background: var(--dz-coral-soft); color: var(--dz-coral-ink); }
+.dz-tag--sun { background: var(--dz-sun-soft); color: var(--dz-sun-ink); }
+.dz-tag--mint { background: var(--dz-mint-soft); color: var(--dz-mint-ink); }
+.dz-tag--sky { background: var(--dz-sky-soft); color: var(--dz-sky-ink); }
+.dz-tag--danger { background: var(--dz-danger-soft); color: var(--dz-danger); }
+
+/* ---- 数字角标 ---- */
+.dz-badge {
+  display: inline-grid; place-items: center; min-width: 18px; height: 18px; padding: 0 5px;
+  border-radius: var(--dz-r-pill); background: var(--dz-primary); color: var(--dz-on-primary);
+  font: 800 11px/1 var(--dz-font); font-variant-numeric: tabular-nums;
+}
+.dz-badge--dot { min-width: 8px; width: 8px; height: 8px; padding: 0; }
+
+/* ---- 可选药丸（模板、筛选） ---- */
+.dz-chip {
+  display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 var(--dz-s3);
+  border-radius: var(--dz-r-pill); border: 1.5px solid var(--dz-line);
+  background: var(--dz-bg); color: var(--dz-ink); font: 500 var(--dz-fs-sm)/1 var(--dz-font);
+  cursor: pointer; transition: background var(--dz-t-fast), border-color var(--dz-t-fast);
+}
+.dz-chip:hover { border-color: var(--dz-line-strong); background: var(--dz-hover); }
+.dz-chip[aria-pressed="true"] { background: var(--dz-ink); border-color: var(--dz-ink); color: var(--dz-bg); }
+.dz-chip:focus-visible { outline: none; box-shadow: var(--dz-focus); }
+
+/* ---- 表单 ---- */
+.dz-field { display: flex; flex-direction: column; gap: 6px; }
+.dz-field__label { font-size: var(--dz-fs-sm); font-weight: 600; color: var(--dz-ink); }
+.dz-field__hint { font-size: var(--dz-fs-xs); color: var(--dz-ink-2); }
+.dz-field__error { font-size: var(--dz-fs-xs); color: var(--dz-danger); font-weight: 600; }
+.dz-input, .dz-textarea {
+  width: 100%; padding: 10px var(--dz-s3);
+  background: var(--dz-surface); color: var(--dz-ink);
+  border: 1.5px solid var(--dz-line-strong); border-radius: var(--dz-r);
+  font: 400 var(--dz-fs-md)/1.5 var(--dz-font);
+  transition: border-color var(--dz-t-fast), box-shadow var(--dz-t-fast);
+}
+.dz-input::placeholder, .dz-textarea::placeholder { color: var(--dz-ink-3); }
+.dz-input:hover, .dz-textarea:hover { border-color: var(--dz-ink-3); }
+.dz-input:focus, .dz-textarea:focus { outline: none; border-color: var(--dz-primary); box-shadow: var(--dz-focus); }
+.dz-input[aria-invalid="true"], .dz-textarea[aria-invalid="true"] { border-color: var(--dz-danger); }
+.dz-textarea { resize: vertical; min-height: 88px; }
+
+/* 大输入框（首页 / 创作页的"跟搭子说"）：墨色描边 + 墨色贴纸阴影 */
+.dz-compose {
+  background: var(--dz-surface);
+  border: 2px solid var(--dz-ink); border-radius: var(--dz-r-xl);
+  box-shadow: var(--dz-sticker-ink);
+  padding: var(--dz-s4) var(--dz-s4) var(--dz-s3);
+  transition: transform var(--dz-t-fast), box-shadow var(--dz-t-fast);
+}
+.dz-compose:focus-within { transform: translate(-1px, -1px); box-shadow: 5px 5px 0 var(--dz-ink); }
+:root[data-theme="dark"] .dz-compose { border-color: var(--dz-line-strong); }
+:root[data-theme="dark"] .dz-compose:focus-within { box-shadow: 5px 5px 0 #000; }
+.dz-compose textarea {
+  width: 100%; border: 0; outline: none; resize: none; background: transparent;
+  color: var(--dz-ink); font: 400 var(--dz-fs-lg)/1.6 var(--dz-font); min-height: 30px;
+}
+.dz-compose textarea::placeholder { color: var(--dz-ink-3); }
+.dz-compose__bar { display: flex; align-items: center; gap: var(--dz-s2); margin-top: var(--dz-s3); flex-wrap: wrap; }
+.dz-compose__bar > :last-child { margin-left: auto; }
+
+/* ---- 分段控件（页面内的标签页） ---- */
+.dz-seg {
+  display: inline-flex; gap: 2px; padding: 3px;
+  background: var(--dz-surface-2); border-radius: var(--dz-r);
+}
+.dz-seg button {
+  border: 0; background: transparent; color: var(--dz-ink-2); cursor: pointer;
+  height: 32px; padding: 0 var(--dz-s4); border-radius: 9px;
+  font: 600 var(--dz-fs-sm)/1 var(--dz-font);
+  display: inline-flex; align-items: center; gap: 6px;
+  transition: background var(--dz-t-fast), color var(--dz-t-fast);
+}
+.dz-seg button:hover { color: var(--dz-ink); }
+.dz-seg button[aria-selected="true"] { background: var(--dz-surface); color: var(--dz-ink); box-shadow: var(--dz-shadow-soft); }
+.dz-seg button:focus-visible { outline: none; box-shadow: var(--dz-focus); }
+
+/* ---- 进度条 ---- */
+.dz-progress { height: 6px; border-radius: var(--dz-r-pill); background: var(--dz-surface-2); overflow: hidden; }
+.dz-progress > span { display: block; height: 100%; border-radius: inherit; background: var(--dz-coral); transition: width var(--dz-t); }
+.dz-progress--sun > span { background: var(--dz-sun); }
+.dz-progress--indeterminate > span { width: 35% !important; animation: dz-slide 1.2s ease-in-out infinite; }
+
+/* ---- 开关 ---- */
+.dz-switch { position: relative; width: 40px; height: 24px; flex: none; }
+.dz-switch input { position: absolute; inset: 0; opacity: 0; margin: 0; cursor: pointer; }
+.dz-switch span {
+  position: absolute; inset: 0; border-radius: var(--dz-r-pill); background: var(--dz-line-strong);
+  transition: background var(--dz-t-fast); pointer-events: none;
+}
+.dz-switch span::after {
+  content: ""; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%;
+  background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.2); transition: transform var(--dz-t-fast);
+}
+.dz-switch input:checked + span { background: var(--dz-primary); }
+.dz-switch input:checked + span::after { transform: translateX(16px); }
+.dz-switch input:focus-visible + span { box-shadow: var(--dz-focus); }
+
+/* ---- 吉祥物 ---- */
+.dz-mascot {
+  display: grid; place-items: center; flex: none;
+  width: var(--_size, 120px); height: var(--_size, 120px);
+  border-radius: 50%; background: var(--dz-coral-soft); overflow: hidden;
+}
+.dz-mascot img { width: 88%; height: auto; }
+.dz-mascot--bob img { animation: dz-bob 1.6s ease-in-out infinite; }
+
+/* ---- 空状态 / 加载 / 出错 ---- */
+.dz-state {
+  display: flex; flex-direction: column; align-items: center; text-align: center;
+  gap: var(--dz-s3); padding: var(--dz-s10) var(--dz-s6);
+}
+.dz-state__title { font-size: var(--dz-fs-lg); font-weight: 700; color: var(--dz-ink); margin-top: var(--dz-s2); }
+.dz-state__desc { font-size: var(--dz-fs-sm); color: var(--dz-ink-2); max-width: 360px; line-height: 1.7; }
+.dz-state__actions { display: flex; gap: var(--dz-s2); margin-top: var(--dz-s2); }
+
+/* ---- 标题装饰：手绘波浪下划线 ---- */
+.dz-squiggle { position: relative; display: inline-block; }
+.dz-squiggle::after {
+  content: ""; position: absolute; left: 0; right: 8%; bottom: -10px; height: 12px;
+  background: var(--dz-coral);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 150 12' preserveAspectRatio='none'%3E%3Cpath d='M2 8 C 30 2, 60 12, 90 6 S 140 4, 148 7' stroke='black' stroke-width='4' fill='none' stroke-linecap='round'/%3E%3C/svg%3E") center / 100% 100% no-repeat;
+          mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 150 12' preserveAspectRatio='none'%3E%3Cpath d='M2 8 C 30 2, 60 12, 90 6 S 140 4, 148 7' stroke='black' stroke-width='4' fill='none' stroke-linecap='round'/%3E%3C/svg%3E") center / 100% 100% no-repeat;
+}
+
+/* ---- 标题层级 ---- */
+.dz-h1 { font-size: var(--dz-fs-2xl); font-weight: 800; line-height: 1.25; color: var(--dz-ink); }
+.dz-h2 { font-size: var(--dz-fs-lg); font-weight: 700; color: var(--dz-ink); display: flex; align-items: baseline; gap: var(--dz-s2); }
+.dz-h2 small { font-size: var(--dz-fs-sm); font-weight: 400; color: var(--dz-ink-2); }
+.dz-sub { font-size: var(--dz-fs-md); color: var(--dz-ink-2); }
+
+@keyframes dz-spin { to { transform: rotate(360deg); } }
+@keyframes dz-slide { from { transform: translateX(-100%); } to { transform: translateX(290%); } }
+@keyframes dz-bob { 50% { transform: translateY(-5px); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .dz-btn, .dz-card--interactive, .dz-compose { transition: none; }
+  .dz-mascot--bob img, .dz-progress--indeterminate > span, .dz-btn__spin { animation: none; }
+  .dz-btn--primary:hover:not(:disabled), .dz-card--interactive:hover { transform: none; }
+}
