@@ -203,7 +203,7 @@ easel-desktop/
 | **M0 骨架** | Tauri 壳 + 双平台 CI（win-x64 / mac-arm64），出安装包，显示占位页 | 从 Actions 下载的安装包能装、能打开 |
 | **M1 运行时包** | runtime.yml 构建运行时包；stage-easel 裁剪 + 构建前端 | CI 里用运行时包能把 Easel 跑起来，冒烟测试通过 |
 | **M2 进程管家** | 下载 / 校验 / 解压，启动两个服务，Job Object，日志，单实例，端口检查 | 本地填好 `.env` 后能完整使用工作台，关闭后不残留进程 |
-| **M3 中转服务**（代码完成，服务已在 grok 运行；公网入口待开通） | `cloud/`：激活码、令牌、透传代理、计量、管理后台；部署上线 | 激活码能用，六个通道都能通过中转调用成功 |
+| **M3 中转服务**（✅ 已上线 https://dazi.suge.me） | `cloud/`：激活码、令牌、透传代理、计量、管理后台；部署上线 | 激活码能用，六个通道都能通过中转调用成功 |
 | **M4 适配补丁** | 第 6 节隐藏模型配置 + 「我的会员」页；Windows 兼容补丁（`/tmp` 等） | 在一台全新的 Windows 机器上完整走一遍五大工作流 |
 | **M5 更新与发布** | 自动更新（OSS）、版本号展示、发布流程 | v0.1.0 → v0.1.1 能自动升级，用户数据不丢 |
 | M6 商用准备 | Windows 代码签名、macOS 公证、用户协议 / 隐私政策 | — |
@@ -245,8 +245,10 @@ M2 实现要点与变化：
 - 模型：AI 创作 kimi-k3（claudex），短任务 muse-spark，生图 muse-image，生视频 muse-video；全部在服务器环境变量里，换模型不用发版
 - 软件端：设置 → 会员 输入激活码 → 本机后台向搭子云换令牌，写进 `.env`（所有通道指向 `https://dazi.suge.me/v1`）；导航会员卡显示剩余天数和本月额度；激活后重启软件，AI 创作才用上会员模型
 - 本机全链路已测：生成码 → 激活 → 设备绑定 → 续费叠加 → 额度拦截；经中转的流式对话、工具调用、生图、生视频（Easel 自带脚本）都通过
-- **待开通公网入口**（涉及共用设施，需要确认后再做）：
+- **公网入口已开通（2026-10-01）**，原先待办的四步都已完成：
   1. grok `/workspace/suge/deploy/Caddyfile` 加 `dazi.suge.me` → `127.0.0.1:5430`，重建并重启 `suge-edge`（所有 *.suge.me 会中断几秒）
   2. suge nginx 新站点 `dazi.suge.me`（`/admin` 走 authentik，`/v1` 直通）+ Let's Encrypt 证书
   3. Cloudflare DNS：`dazi` A 记录
   4. authentik：新建 Proxy Provider + Application「搭子云」（照 `/workspace/authentik/data/easel-provider.py`）
+- 外网验证：激活、查会员、经 Cloudflare 流式调用 kimi 都通过；伪造登录身份访问后台被拦住；`/admin` 跳转 auth.suge.me 登录
+- 数据改为 bind mount 到 `/workspace/dazi-cloud/data`（最初用了 Docker 命名卷，grok 10/1 重置时被清掉，里面只有测试数据），已加入 grok 重置后的自动恢复
