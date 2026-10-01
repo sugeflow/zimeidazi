@@ -1,6 +1,15 @@
 # 搭子云（cloud/）
 
-激活码（月卡）+ 模型中转。线上地址 https://dazi.suge.me ，部署在 grok `/workspace/dazi-cloud`（见 `deploy.md`）。
+激活码（月卡）+ 模型中转。线上地址 https://dazi.suge.me ，部署在 grok `/workspace/dazi-cloud`。
+
+## 部署（grok）
+
+- 代码、`deploy/compose.yml`、`deploy/restore.py` 拷到 `/workspace/dazi-cloud/`（restore.py、compose.yml 放在根目录）
+- 真实模型 Key 写在 `/workspace/dazi-cloud/.runtime/secrets.env`（600，不进 Git）
+- 数据在 `/workspace/dazi-cloud/data`（bind mount；grok 重置会清空 Docker 卷，但 `/workspace` 还在）
+- 启动：`python3 /workspace/dazi-cloud/restore.py up -d --build`；已加进 `/workspace/recovery/start-all.sh` 和 `expected-containers.txt`，重置后自动恢复
+- 入口：suge nginx（TLS，`/admin` 走 authentik）→ WireGuard → grok `suge-edge` Caddy（`# BEGIN dazi-cloud` 块，`/outpost.goauthentik.io/*` 转 authentik）→ `127.0.0.1:5430`
+- authentik：应用 `dazi-cloud`、Proxy Provider「搭子云」（forward_single），脚本 `/workspace/authentik/data/dazi-provider.py`
 
 - 软件里只有 `https://dazi.suge.me/v1` 和一个绑定本机的令牌，真实的模型 Key 只在服务器的环境变量里
 - 软件用的模型名：`dazi-agent`（AI 创作，需要工具调用）、`dazi-fast`（起草回复等短任务）；生图、生视频不看模型名

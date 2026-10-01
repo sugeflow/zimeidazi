@@ -1,0 +1,17 @@
+# grok 上的部署：数据放 /workspace/dazi-cloud/data（bind mount，grok 重置后还在），不用 Docker 命名卷。
+# 用 restore.py 启动，它会把路径换成外层 Docker 看到的路径。
+services:
+  dazi-cloud:
+    image: dazi-cloud:local
+    build: .
+    container_name: dazi-cloud
+    restart: unless-stopped
+    ports: ["127.0.0.1:5430:8080"]
+    env_file: .runtime/secrets.env
+    volumes:
+      - {type: bind, source: "${DAZI_ROOT:?用 restore.py 启动}/data", target: /data, bind: {create_host_path: false}}
+    read_only: true
+    tmpfs: [/tmp]
+    mem_limit: 512m
+    security_opt: [no-new-privileges:true]
+    logging: {driver: json-file, options: {max-size: 10m, max-file: "3"}}
