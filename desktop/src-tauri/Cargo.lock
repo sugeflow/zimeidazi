@@ -5552,7 +5552,7 @@ dependencies = [
 
 [[package]]
 name = "zimeidazi"
-version = "0.0.6"
+version = "0.0.7"
 dependencies = [
  "anyhow",
  "dirs",
